@@ -44,9 +44,8 @@ const Calendar = () => {
     }, []);
 
     useEffect(() => {
-        if (!user) return;
-
-        const q = query(collection(db, "events"), where("userId", "==", user.userId));
+        const userId = user?.userId || "local-user";
+        const q = query(collection(db, "events"), where("userId", "==", userId));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const eventData = snapshot.docs.map((doc) => ({
                 id: doc.id,
