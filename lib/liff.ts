@@ -2,9 +2,9 @@ import liff from "@line/liff";
 
 export const initLiff = async () => {
     // Add your LIFF ID here
-    const liffId = "";
+    const liffId = "2009451557-lZpkB3ag";
     if (!liffId) {
-        console.warn("LIFF ID is not defined. Running in local development mode.");
+        console.warn("LIFF ID is not defined.");
         return;
     }
 
