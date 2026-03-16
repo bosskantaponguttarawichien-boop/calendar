@@ -1,7 +1,8 @@
 import liff from "@line/liff";
 
 export const initLiff = async () => {
-    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+    // Add your LIFF ID here
+    const liffId = "";
     if (!liffId) {
         console.error("LIFF ID is not defined");
         return;
