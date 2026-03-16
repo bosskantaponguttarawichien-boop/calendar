@@ -4,7 +4,7 @@ export const initLiff = async () => {
     // Add your LIFF ID here
     const liffId = "";
     if (!liffId) {
-        console.error("LIFF ID is not defined");
+        console.warn("LIFF ID is not defined. Running in local development mode.");
         return;
     }
 
