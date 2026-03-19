@@ -83,7 +83,7 @@ body {
   background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   overflow-y: auto !important;
   touch-action: auto !important;
@@ -143,18 +143,17 @@ html {
 
 /* Date cells as vertical pills */
 .fc .fc-daygrid-day-frame {
-  min-height: 40px !important;
-  /* height: 70px !important; */
+  min-height: 30px !important;
+  /* Reduced from 40px */
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  padding: 4px !important;
+  padding: 2px !important;
+  /* Reduced from 4px */
   background-color: white !important;
-  /* Move background here */
   border-radius: 9999px !important;
-  /* Move radius here */
-  margin: 6px 4px !important;
-  /* Vertical and horizontal gaps */
+  margin: 2px 2px !important;
+  /* Reduced from 4px 2px */
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05) !important;
   transition: transform 0.2s;
 }
@@ -207,10 +206,12 @@ html {
 
 /* Events as small dots below the number */
 .fc-daygrid-day-events {
-  margin-top: 4px !important;
+  margin-top: 2px !important;
+  /* Reduced from 4px */
   display: flex !important;
   flex-direction: column !important;
-  gap: 4px !important;
+  gap: 2px !important;
+  /* Reduced from 4px */
   width: 100% !important;
   align-items: center !important;
 }

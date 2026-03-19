@@ -181,9 +181,9 @@ const Calendar = () => {
     }, []);
 
     return (
-        <div className="pt-6 px-4 pb-6 max-w-lg mx-auto h-screen flex flex-col overflow-hidden">
+        <div className="pt-4 px-3 pb-4 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden">
             {/* Header / Month Selector */}
-            <div className="flex justify-between items-center mb-8 shrink-0">
+            <div className="flex justify-between items-center mb-4 shrink-0">
                 <button
                     onClick={() => setIsMonthPickerOpen(true)}
                     className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-lg active:scale-95 transition-transform"
@@ -214,7 +214,8 @@ const Calendar = () => {
                     ]}
                     dateClick={handleDateClick}
                     eventClick={handleEventClick}
-                    height="auto"
+                    height="100%"
+                    aspectRatio={1.1}
                     fixedWeekCount={false}
                     dayHeaderFormat={{ weekday: 'short' }}
                     dayHeaderContent={(arg) => {
@@ -246,7 +247,7 @@ const Calendar = () => {
             </div>
 
             {/* Bottom Bar */}
-            <div className="flex justify-between items-center mt-auto pb-10 shrink-0">
+            <div className="flex justify-between items-center mt-auto pb-4 shrink-0">
                 <button
                     onClick={handleToday}
                     className="bg-white px-8 py-3 rounded-full shadow-sm text-slate-800 font-bold text-lg active:scale-95 transition-transform"
