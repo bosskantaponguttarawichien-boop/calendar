@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th" className={notoThai.variable}>
-      <body className="antialiased">
+      <body className="antialiased bg-[#f8fafc] text-[#1A1A1A]">
         {children}
       </body>
     </html>

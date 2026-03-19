@@ -21,6 +21,8 @@ const THAI_MONTHS = [
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
 
+import NavBar from "./NavBar";
+
 const Calendar = () => {
     const calendarRef = useRef<FullCalendar>(null);
     const [events, setEvents] = useState<any[]>([]);
@@ -237,17 +239,7 @@ const Calendar = () => {
                     }}
                 />
             </div>
-
-            {/* Bottom Bar */}
-            <div className="flex justify-between items-center mt-auto pb-2 shrink-0">
-                <button
-                    onClick={handleToday}
-                    className="bg-white px-5 py-2 rounded-full shadow-sm text-slate-800 font-bold text-base active:scale-95 transition-transform"
-                >
-                    วันนี้
-                </button>
-                <div className="w-40 h-12 bg-white rounded-full shadow-sm"></div>
-            </div>
+            <NavBar />
 
             <EventModal
                 isOpen={isModalOpen}
