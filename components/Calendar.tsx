@@ -11,6 +11,11 @@ import EventModal from "./EventModal";
 import { initLiff, getProfile, getContext } from "@/lib/liff";
 import { format, setMonth, setYear } from "date-fns";
 
+// --- ปรับความเร็ว Animation ตรงนี้ ---
+const SCROLL_DEBOUNCE = 800; // เวลาหน่วงระหว่างการสไลด์ (ms)
+const TRANSITION_DELAY = 300; // ความเร็วของตัวแอนิเมชั่น (ms) - ควรแก้ให้สัมพันธ์กับ --slide-duration ใน CSS
+// ---------------------------------
+
 const THAI_MONTHS = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
@@ -26,8 +31,10 @@ const Calendar = () => {
     const [title, setTitle] = useState("");
     const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
     const [pickerDate, setPickerDate] = useState(new Date());
+    const [isPaginating, setIsPaginating] = useState(false);
+    const [animationClass, setAnimationClass] = useState("");
     const lastScrollTime = useRef(0);
-    const touchStartY = useRef(0);
+    const touchStartRef = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const startup = async () => {
@@ -35,7 +42,7 @@ const Calendar = () => {
             const profile = await getProfile();
             setUser(profile);
         };
-        startup();
+        // startup();
     }, []);
 
     useEffect(() => {
@@ -110,41 +117,60 @@ const Calendar = () => {
 
     const handleWheel = (e: React.WheelEvent) => {
         const now = Date.now();
-        if (now - lastScrollTime.current < 400) return; // Debounce 400ms for stability
+        if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return; 
 
-        if (calendarRef.current) {
+        if (calendarRef.current && Math.abs(e.deltaX) > 20) {
             const api = calendarRef.current.getApi();
-            if (e.deltaY > 0) {
-                api.next();
-            } else if (e.deltaY < 0) {
-                api.prev();
-            }
-            lastScrollTime.current = now;
-            updateTitle();
+            setIsPaginating(true);
+            const isNext = e.deltaX > 0;
+            
+            setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
+            
+            setTimeout(() => {
+                if (isNext) api.next(); else api.prev();
+                updateTitle();
+                setAnimationClass(isNext ? "animate-slide-in-right" : "animate-slide-in-left");
+                lastScrollTime.current = now;
+                setTimeout(() => {
+                    setIsPaginating(false);
+                    setAnimationClass("");
+                }, TRANSITION_DELAY);
+            }, TRANSITION_DELAY);
         }
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        touchStartY.current = e.touches[0].clientY;
+        touchStartRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        };
     };
 
     const handleTouchEnd = (e: React.TouchEvent) => {
         const now = Date.now();
-        if (now - lastScrollTime.current < 400) return;
+        if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
 
-        const touchEndY = e.changedTouches[0].clientY;
-        const diff = touchStartY.current - touchEndY;
-
-        if (Math.abs(diff) > 50) { // 50px threshold
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchStartRef.current.x - touchEndX;
+        
+        if (Math.abs(diffX) > 50) { 
             if (calendarRef.current) {
                 const api = calendarRef.current.getApi();
-                if (diff > 0) {
-                    api.next(); // Swipe Up -> Next
-                } else {
-                    api.prev(); // Swipe Down -> Prev
-                }
-                lastScrollTime.current = now;
-                updateTitle();
+                setIsPaginating(true);
+                const isNext = diffX > 0;
+                
+                setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
+
+                setTimeout(() => {
+                    if (isNext) api.next(); else api.prev();
+                    updateTitle();
+                    setAnimationClass(isNext ? "animate-slide-in-right" : "animate-slide-in-left");
+                    lastScrollTime.current = now;
+                    setTimeout(() => {
+                        setIsPaginating(false);
+                        setAnimationClass("");
+                    }, TRANSITION_DELAY);
+                }, TRANSITION_DELAY);
             }
         }
     };
@@ -155,9 +181,9 @@ const Calendar = () => {
     }, []);
 
     return (
-        <div className="pt-6 px-4 pb-6 max-w-lg mx-auto min-h-screen flex flex-col">
+        <div className="pt-6 px-4 pb-6 max-w-lg mx-auto h-screen flex flex-col overflow-hidden">
             {/* Header / Month Selector */}
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-8 shrink-0">
                 <button
                     onClick={() => setIsMonthPickerOpen(true)}
                     className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-lg active:scale-95 transition-transform"
@@ -169,8 +195,8 @@ const Calendar = () => {
             </div>
 
             {/* Calendar Grid Container */}
-            <div
-                className="flex-grow scroll-container touch-none"
+            <div 
+                className={`flex-grow scroll-container touch-none overflow-hidden ${animationClass}`} 
                 onWheel={handleWheel}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
@@ -181,7 +207,11 @@ const Calendar = () => {
                     initialView="dayGridMonth"
                     headerToolbar={false}
                     locale="th"
-                    events={events}
+                    events={[
+                        { title: 'Meeting', date: new Date().toISOString().split('T')[0] },
+                        { title: 'Appointment', date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0] },
+                        { title: 'Deadline', date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0] }
+                    ]}
                     dateClick={handleDateClick}
                     eventClick={handleEventClick}
                     height="auto"
@@ -216,7 +246,7 @@ const Calendar = () => {
             </div>
 
             {/* Bottom Bar */}
-            <div className="flex justify-between items-center mt-8 pb-10">
+            <div className="flex justify-between items-center mt-auto pb-10 shrink-0">
                 <button
                     onClick={handleToday}
                     className="bg-white px-8 py-3 rounded-full shadow-sm text-slate-800 font-bold text-lg active:scale-95 transition-transform"
