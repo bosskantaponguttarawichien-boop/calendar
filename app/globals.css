@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
+  --background: #f8fafc;
   --foreground: #1e293b;
   --primary: #00b900;
-  /* LINE Green */
   --primary-foreground: #ffffff;
 }
 
@@ -17,62 +16,157 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  overflow-y: auto !important;
+  touch-action: auto !important;
 }
+
+html {
+  height: 100%;
+}
+
+/* Aggressively hide scrollbars globally for all elements */
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+
+/* --- FullCalendar Pill-Style Overrides --- */
 
 .fc {
-  --fc-button-bg-color: #00b900;
-  --fc-button-border-color: #00b900;
-  --fc-button-hover-bg-color: #009900;
-  --fc-button-active-bg-color: #007700;
-  --fc-event-bg-color: #00b900;
-  --fc-event-border-color: #00b900;
-  --fc-border-color: #e2e8f0;
-  --fc-today-bg-color: #fefce8;
+  --fc-border-color: transparent;
+  --fc-daygrid-event-dot-width: 4px;
+  background-color: transparent !important;
 }
 
-.fc .fc-toolbar-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
 
-/* Custom Calendar Grid Styling */
+/* Remove all borders */
 .fc-theme-standard td,
-.fc-theme-standard th {
-  border-color: #f1f5f9 !important;
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+  border: none !important;
+  background-color: transparent !important;
 }
 
-.fc-theme-standard .fc-scrollgrid {
+/* Day headers (Sun, Mon, etc.) */
+.fc .fc-col-header-cell,
+.fc .fc-col-header,
+.fc .fc-scrollgrid-section-header,
+.fc .fc-scrollgrid-section-header>th,
+.fc .fc-scrollgrid-section-header>td {
+  background-color: transparent !important;
+  padding-bottom: 8px;
+  font-weight: 500;
+  color: #64748b;
+  font-size: 0.875rem;
   border: none !important;
 }
 
-.fc .fc-col-header-cell {
-  background-color: white;
-  padding: 8px 0;
-  font-weight: 700;
-  color: #1e293b;
+
+
+/* Date cells as vertical pills */
+.fc .fc-daygrid-day-frame {
+  min-height: 40px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 4px !important;
+  background-color: white !important;
+  /* Move background here */
+  border-radius: 9999px !important;
+  /* Move radius here */
+  margin: 6px 4px !important;
+  /* Vertical and horizontal gaps */
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05) !important;
+  transition: transform 0.2s;
 }
 
+.fc .fc-daygrid-day-frame:hover {
+  transform: translateY(-2px);
+}
+
+.fc .fc-daygrid-day-top {
+  flex: none !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  padding-top: 4px !important;
+}
+
+/* Make the actual table cell transparent */
+.fc .fc-daygrid-day {
+  background-color: transparent !important;
+}
+
+/* Date number circle */
 .fc .fc-daygrid-day-number {
-  color: #64748b;
-  font-size: 0.875rem;
-  padding: 4px 8px !important;
+  background-color: #f1f5f9;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  color: #1e293b;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
+
+
+/* Current/Active date number circle */
 .fc .fc-daygrid-day.fc-day-today {
-  background-color: #fffbeb !important;
+  background-color: transparent !important;
+  /* Ensure cell background is transparent */
 }
 
 .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-  color: #854d0e;
-  font-weight: 700;
+  background-color: #ef4444 !important;
+  /* Red highlight */
+  color: white !important;
 }
 
-.fc-h-event {
-  background-color: #00b900 !important;
-  border: none !important;
-  border-radius: 4px !important;
-  padding: 2px 4px !important;
+/* Events as small dots below the number */
+.fc-daygrid-day-events {
+  margin-top: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  width: 100% !important;
+  align-items: center !important;
+}
+
+.fc-daygrid-event-harness {
+  display: none !important;
+  /* Hide default event bars */
+}
+
+/* Custom event indicator (if needed later) */
+.event-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #00b900;
+}
+
+/* Hide other months' days */
+.fc .fc-day-other {
+  opacity: 0.2;
+}
+
+/* View switcher and other elements we don't need */
+.fc-header-toolbar {
+  display: none !important;
 }

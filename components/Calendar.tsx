@@ -6,10 +6,15 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, where } from "firebase/firestore";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import EventModal from "./EventModal";
 import { initLiff, getProfile, getContext } from "@/lib/liff";
-import { format } from "date-fns";
+import { format, setMonth, setYear } from "date-fns";
+
+const THAI_MONTHS = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
 
 const Calendar = () => {
     const calendarRef = useRef<FullCalendar>(null);
@@ -19,26 +24,16 @@ const Calendar = () => {
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
     const [title, setTitle] = useState("");
+    const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+    const [pickerDate, setPickerDate] = useState(new Date());
+    const lastScrollTime = useRef(0);
+    const touchStartY = useRef(0);
 
     useEffect(() => {
         const startup = async () => {
             await initLiff();
             const profile = await getProfile();
-            const context = getContext();
-
             setUser(profile);
-
-            // Deep Linking - Check for 'date' param
-            const params = new URLSearchParams(window.location.search);
-            const dateParam = params.get("date");
-            if (dateParam && calendarRef.current) {
-                calendarRef.current.getApi().gotoDate(dateParam);
-                setTimeout(updateTitle, 100);
-            }
-
-            if (context?.type !== "utou") {
-                console.warn("This app is designed for Personal Chat (utou) only. Current context:", context?.type);
-            }
         };
         startup();
     }, []);
@@ -75,16 +70,6 @@ const Calendar = () => {
         }
     };
 
-    const handlePrev = () => {
-        calendarRef.current?.getApi().prev();
-        updateTitle();
-    };
-
-    const handleNext = () => {
-        calendarRef.current?.getApi().next();
-        updateTitle();
-    };
-
     const handleToday = () => {
         calendarRef.current?.getApi().today();
         updateTitle();
@@ -97,6 +82,70 @@ const Calendar = () => {
             const month = date.toLocaleString("th-TH", { month: "long" });
             const year = date.getFullYear() + 543;
             setTitle(`${month} ${year}`);
+            setPickerDate(date);
+        }
+    };
+
+    const handleMonthSelect = (monthIndex: number) => {
+        if (calendarRef.current) {
+            const api = calendarRef.current.getApi();
+            const newDate = setMonth(pickerDate, monthIndex);
+            api.gotoDate(newDate);
+            setIsMonthPickerOpen(false);
+            updateTitle();
+        }
+    };
+
+    const handleYearChange = (offset: number) => {
+        setPickerDate(prev => setYear(prev, prev.getFullYear() + offset));
+    };
+
+    const handlePickerToday = () => {
+        if (calendarRef.current) {
+            calendarRef.current.getApi().today();
+            setIsMonthPickerOpen(false);
+            updateTitle();
+        }
+    };
+
+    const handleWheel = (e: React.WheelEvent) => {
+        const now = Date.now();
+        if (now - lastScrollTime.current < 400) return; // Debounce 400ms for stability
+
+        if (calendarRef.current) {
+            const api = calendarRef.current.getApi();
+            if (e.deltaY > 0) {
+                api.next();
+            } else if (e.deltaY < 0) {
+                api.prev();
+            }
+            lastScrollTime.current = now;
+            updateTitle();
+        }
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        const now = Date.now();
+        if (now - lastScrollTime.current < 400) return;
+
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY.current - touchEndY;
+
+        if (Math.abs(diff) > 50) { // 50px threshold
+            if (calendarRef.current) {
+                const api = calendarRef.current.getApi();
+                if (diff > 0) {
+                    api.next(); // Swipe Up -> Next
+                } else {
+                    api.prev(); // Swipe Down -> Prev
+                }
+                lastScrollTime.current = now;
+                updateTitle();
+            }
         }
     };
 
@@ -105,82 +154,76 @@ const Calendar = () => {
         return () => clearTimeout(timer);
     }, []);
 
-
     return (
-        <div className="p-4 max-w-lg mx-auto bg-slate-100 min-h-screen">
-            {/* Main Header */}
-            <div className="flex justify-between items-center mb-6 pt-4 px-2">
-                <h1 className="text-2xl font-bold text-[#1e293b]">ปฏิทินของฉัน</h1>
+        <div className="pt-6 px-4 pb-6 max-w-lg mx-auto min-h-screen flex flex-col">
+            {/* Header / Month Selector */}
+            <div className="flex justify-between items-center mb-8">
                 <button
-                    onClick={() => {
-                        setSelectedDate(new Date().toISOString().split("T")[0]);
-                        setIsModalOpen(true);
-                    }}
-                    className="bg-[#00b900] text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-all transform active:scale-95 flex items-center justify-center"
+                    onClick={() => setIsMonthPickerOpen(true)}
+                    className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-lg active:scale-95 transition-transform"
                 >
-                    <Plus size={28} strokeWidth={3} />
+                    {title}
+                    <ChevronDown size={22} className="text-slate-400" />
                 </button>
+                <div className="w-20 h-12 bg-white/40 backdrop-blur-sm rounded-full shadow-sm"></div>
             </div>
 
-            {/* Calendar Card */}
-            <div className="bg-white rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-slate-200 overflow-hidden mb-4 p-4">
-                {/* Secondary Header / Toolbar */}
-                <div className="flex justify-between items-start mb-6 pt-2">
-                    {/* Navigation on the Left */}
-                    <div className="flex flex-col gap-2">
-                        <div className="flex bg-[#00b900] rounded-lg overflow-hidden shadow-sm">
-                            <button onClick={handlePrev} className="p-2 text-white hover:bg-green-700 border-r border-green-500/50 transition-colors">
-                                <ChevronLeft size={20} strokeWidth={3} />
-                            </button>
-                            <button onClick={handleNext} className="p-2 text-white hover:bg-green-700 transition-colors">
-                                <ChevronRight size={20} strokeWidth={3} />
-                            </button>
-                        </div>
-                        <button
-                            onClick={handleToday}
-                            className="bg-[#66cc66] text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-500 shadow-sm transition-colors text-center"
-                        >
-                            today
-                        </button>
-                    </div>
+            {/* Calendar Grid Container */}
+            <div
+                className="flex-grow scroll-container touch-none"
+                onWheel={handleWheel}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
+                <FullCalendar
+                    ref={calendarRef}
+                    plugins={[dayGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    headerToolbar={false}
+                    locale="th"
+                    events={events}
+                    dateClick={handleDateClick}
+                    eventClick={handleEventClick}
+                    height="auto"
+                    fixedWeekCount={false}
+                    dayHeaderFormat={{ weekday: 'short' }}
+                    dayHeaderContent={(arg) => {
+                        const days: { [key: string]: string } = {
+                            'อา.': 'อา',
+                            'จ.': 'จ',
+                            'อ.': 'อ',
+                            'พ.': 'พ',
+                            'พฤ.': 'พฤ',
+                            'ศ.': 'ศ',
+                            'ส.': 'ส'
+                        };
+                        const dayName = days[arg.text] || arg.text;
+                        const today = new Date();
+                        const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
+                            pickerDate.getFullYear() === today.getFullYear();
+                        const isTodayDay = isTodayMonth && arg.date.getDay() === today.getDay();
 
-                    {/* Month/Year centered */}
-                    <div className="text-center">
-                        <div className="text-[#1e293b] font-bold text-2xl leading-none mb-1">{title.split(' ')[0]}</div>
-                        <div className="text-[#1e293b] font-bold text-2xl leading-none">{title.split(' ')[1]}</div>
-                    </div>
+                        return (
+                            <div className="flex flex-col items-center gap-1">
+                                <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
+                                {isTodayDay && (
+                                    <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
+                                )}
+                            </div>
+                        );
+                    }}
+                />
+            </div>
 
-                    {/* View Switcher on the Right - Removed */}
-                    <div className="w-[80px]"></div>
-                </div>
-
-                {/* Grid Container */}
-                <div className="custom-calendar-container">
-                    <FullCalendar
-                        ref={calendarRef}
-                        plugins={[dayGridPlugin, interactionPlugin]}
-                        initialView="dayGridMonth"
-                        headerToolbar={false}
-                        locale="th"
-                        events={events}
-                        dateClick={handleDateClick}
-                        eventClick={handleEventClick}
-                        height="auto"
-                        dayHeaderFormat={{ weekday: 'short' }}
-                        dayHeaderContent={(arg) => {
-                            const days: { [key: string]: string } = {
-                                'อา.': 'อา.',
-                                'จ.': 'จ.',
-                                'อ.': 'อ.',
-                                'พ.': 'พ.',
-                                'พฤ.': 'พฤ.',
-                                'ศ.': 'ศ.',
-                                'ส.': 'ส.'
-                            };
-                            return days[arg.text] || arg.text;
-                        }}
-                    />
-                </div>
+            {/* Bottom Bar */}
+            <div className="flex justify-between items-center mt-8 pb-10">
+                <button
+                    onClick={handleToday}
+                    className="bg-white px-8 py-3 rounded-full shadow-sm text-slate-800 font-bold text-lg active:scale-95 transition-transform"
+                >
+                    วันนี้
+                </button>
+                <div className="w-40 h-12 bg-white rounded-full shadow-sm"></div>
             </div>
 
             <EventModal
@@ -190,8 +233,59 @@ const Calendar = () => {
                 userId={user?.userId}
                 initialEvent={selectedEvent}
             />
+
+            {/* Month Picker Modal */}
+            {isMonthPickerOpen && (
+                <div
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6 pb-20"
+                    onClick={() => setIsMonthPickerOpen(false)}
+                >
+                    <div
+                        className="bg-white rounded-[40px] w-full max-w-sm shadow-2xl p-8 flex flex-col items-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between w-full mb-8 px-4">
+                            <button onClick={() => handleYearChange(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <ChevronLeft size={24} className="text-slate-800" />
+                            </button>
+                            <span className="text-2xl font-bold text-slate-800">
+                                {pickerDate.getFullYear() + 543}
+                            </span>
+                            <button onClick={() => handleYearChange(1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <ChevronRight size={24} className="text-slate-800" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-y-6 gap-x-2 w-full mb-10">
+                            {THAI_MONTHS.map((month, index) => {
+                                const isSelected = pickerDate.getMonth() === index;
+                                return (
+                                    <button
+                                        key={month}
+                                        onClick={() => handleMonthSelect(index)}
+                                        className={`py-2 px-1 rounded-full text-center font-medium transition-all text-sm
+                                            ${isSelected
+                                                ? 'bg-primary text-white shadow-md shadow-primary/20 scale-105'
+                                                : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        {month}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={handlePickerToday}
+                            className="bg-white px-10 py-3 rounded-full shadow-lg border border-slate-100 text-slate-800 font-bold text-lg active:scale-95 transition-transform"
+                        >
+                            เลือกวันนี้
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default Calendar;
+
