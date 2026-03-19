@@ -219,16 +219,8 @@ const Calendar = () => {
                     fixedWeekCount={false}
                     dayHeaderFormat={{ weekday: 'short' }}
                     dayHeaderContent={(arg) => {
-                        const days: { [key: string]: string } = {
-                            'อา.': 'อา',
-                            'จ.': 'จ',
-                            'อ.': 'อ',
-                            'พ.': 'พ',
-                            'พฤ.': 'พฤ',
-                            'ศ.': 'ศ',
-                            'ส.': 'ส'
-                        };
-                        const dayName = days[arg.text] || arg.text;
+                        const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+                        const dayName = days[arg.date.getDay()];
                         const today = new Date();
                         const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
                             pickerDate.getFullYear() === today.getFullYear();
