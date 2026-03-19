@@ -181,15 +181,15 @@ const Calendar = () => {
     }, []);
 
     return (
-        <div className="pt-4 px-3 pb-4 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden">
+        <div className="pt-2 px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden">
             {/* Header / Month Selector */}
-            <div className="flex justify-between items-center mb-4 shrink-0">
+            <div className="flex justify-between items-center mb-2 shrink-0">
                 <button
                     onClick={() => setIsMonthPickerOpen(true)}
-                    className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-lg active:scale-95 transition-transform"
+                    className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-base active:scale-95 transition-transform"
                 >
                     {title}
-                    <ChevronDown size={22} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-400" />
                 </button>
                 <div className="w-20 h-12 bg-white/40 backdrop-blur-sm rounded-full shadow-sm"></div>
             </div>
@@ -216,7 +216,7 @@ const Calendar = () => {
                     eventClick={handleEventClick}
                     height="100%"
                     aspectRatio={1.1}
-                    fixedWeekCount={false}
+                    fixedWeekCount={true}
                     dayHeaderFormat={{ weekday: 'short' }}
                     dayHeaderContent={(arg) => {
                         const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
@@ -239,10 +239,10 @@ const Calendar = () => {
             </div>
 
             {/* Bottom Bar */}
-            <div className="flex justify-between items-center mt-auto pb-4 shrink-0">
+            <div className="flex justify-between items-center mt-auto pb-2 shrink-0">
                 <button
                     onClick={handleToday}
-                    className="bg-white px-8 py-3 rounded-full shadow-sm text-slate-800 font-bold text-lg active:scale-95 transition-transform"
+                    className="bg-white px-5 py-2 rounded-full shadow-sm text-slate-800 font-bold text-base active:scale-95 transition-transform"
                 >
                     วันนี้
                 </button>
@@ -299,7 +299,7 @@ const Calendar = () => {
 
                         <button
                             onClick={handlePickerToday}
-                            className="bg-white px-10 py-3 rounded-full shadow-lg border border-slate-100 text-slate-800 font-bold text-lg active:scale-95 transition-transform"
+                            className="bg-white px-6 py-2 rounded-full shadow-lg border border-slate-100 text-slate-800 font-bold text-base active:scale-95 transition-transform"
                         >
                             เลือกวันนี้
                         </button>

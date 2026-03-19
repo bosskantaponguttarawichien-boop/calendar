@@ -80,6 +80,7 @@
 }
 
 body {
+  background-color: #e2e8f0; /* Base color matching gradient bottom to prevent white gaps */
   background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -91,6 +92,7 @@ body {
 
 html {
   height: 100%;
+  background-color: #e2e8f0; /* Ensures safe areas and overscroll match the theme */
 }
 
 /* Aggressively hide scrollbars globally for all elements */
@@ -148,12 +150,12 @@ html {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  padding: 2px !important;
-  /* Reduced from 4px */
+  padding: 1px !important;
+  /* Reduced from 2px */
   background-color: white !important;
   border-radius: 9999px !important;
-  margin: 2px 2px !important;
-  /* Reduced from 4px 2px */
+  margin: 1px 1.5px !important;
+  /* Reduced from 2px 2px */
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05) !important;
   transition: transform 0.2s;
 }
