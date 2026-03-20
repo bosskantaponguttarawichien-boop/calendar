@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { Home, ClipboardList, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,9 +11,13 @@ const navItems = [
   { id: "setting", icon: Settings, label: "Setting" },
 ];
 
-export default function NavBar() {
-  const [activeTab, setActiveTab] = useState("home");
-  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
+interface NavBarProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+export default function NavBar({ activeTab, onTabChange }: NavBarProps) {
+  const [pillStyle, setPillStyle] = React.useState({ left: 0, width: 0 });
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const navRef = useRef<HTMLElement>(null);
 
@@ -53,7 +57,7 @@ export default function NavBar() {
           <button
             key={item.id}
             ref={(el) => { buttonRefs.current[index] = el; }}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => onTabChange(item.id)}
             className={cn(
               "relative z-10 flex items-center justify-center p-3.5 rounded-full transition-colors duration-200",
               isActive ? "text-white" : "text-[#1A1A1A]/40 hover:text-[#1A1A1A]/70"

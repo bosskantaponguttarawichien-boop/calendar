@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import SettingPage from "./SettingPage";
+import ResultPage from "./ResultPage";
+import GroupPage from "./GroupPage";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -8,20 +11,19 @@ import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, where } from "firebase/firestore";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import EventModal from "./EventModal";
-import { initLiff, getProfile, getContext } from "@/lib/liff";
+import { initLiff, getProfile } from "@/lib/liff";
 import { format, setMonth, setYear } from "date-fns";
+import NavBar from "./NavBar";
 
 // --- ปรับความเร็ว Animation ตรงนี้ ---
-const SCROLL_DEBOUNCE = 800; // เวลาหน่วงระหว่างการสไลด์ (ms)
-const TRANSITION_DELAY = 300; // ความเร็วของตัวแอนิเมชั่น (ms) - ควรแก้ให้สัมพันธ์กับ --slide-duration ใน CSS
+const SCROLL_DEBOUNCE = 800;
+const TRANSITION_DELAY = 300;
 // ---------------------------------
 
 const THAI_MONTHS = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
-
-import NavBar from "./NavBar";
 
 const Calendar = () => {
     const calendarRef = useRef<FullCalendar>(null);
@@ -35,6 +37,7 @@ const Calendar = () => {
     const [pickerDate, setPickerDate] = useState(new Date());
     const [isPaginating, setIsPaginating] = useState(false);
     const [animationClass, setAnimationClass] = useState("");
+    const [activeTab, setActiveTab] = useState("home");
     const lastScrollTime = useRef(0);
     const touchStartRef = useRef({ x: 0, y: 0 });
 
@@ -43,8 +46,9 @@ const Calendar = () => {
             await initLiff();
             const profile = await getProfile();
             setUser(profile);
+            console.log("LIFF Profile loaded:", profile);
         };
-        // startup();
+        startup();
     }, []);
 
     useEffect(() => {
@@ -77,11 +81,6 @@ const Calendar = () => {
             setSelectedEvent(event);
             setIsModalOpen(true);
         }
-    };
-
-    const handleToday = () => {
-        calendarRef.current?.getApi().today();
-        updateTitle();
     };
 
     const updateTitle = () => {
@@ -119,15 +118,13 @@ const Calendar = () => {
 
     const handleWheel = (e: React.WheelEvent) => {
         const now = Date.now();
-        if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return; 
+        if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
 
         if (calendarRef.current && Math.abs(e.deltaX) > 20) {
             const api = calendarRef.current.getApi();
             setIsPaginating(true);
             const isNext = e.deltaX > 0;
-            
             setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
-            
             setTimeout(() => {
                 if (isNext) api.next(); else api.prev();
                 updateTitle();
@@ -142,27 +139,20 @@ const Calendar = () => {
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        touchStartRef.current = {
-            x: e.touches[0].clientX,
-            y: e.touches[0].clientY
-        };
+        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     };
 
     const handleTouchEnd = (e: React.TouchEvent) => {
         const now = Date.now();
         if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
-
         const touchEndX = e.changedTouches[0].clientX;
         const diffX = touchStartRef.current.x - touchEndX;
-        
-        if (Math.abs(diffX) > 50) { 
+        if (Math.abs(diffX) > 50) {
             if (calendarRef.current) {
                 const api = calendarRef.current.getApi();
                 setIsPaginating(true);
                 const isNext = diffX > 0;
-                
                 setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
-
                 setTimeout(() => {
                     if (isNext) api.next(); else api.prev();
                     updateTitle();
@@ -180,66 +170,92 @@ const Calendar = () => {
     useEffect(() => {
         const timer = setTimeout(updateTitle, 100);
         return () => clearTimeout(timer);
-    }, []);
+    }, [activeTab]); // Update when switching back to home
+
+    const renderPageContent = () => {
+        console.log("Rendering Tab:", activeTab);
+        switch (activeTab) {
+            case "setting":
+                return <SettingPage />;
+            case "result":
+                return <ResultPage />;
+            case "group":
+                return <GroupPage />;
+            case "home":
+            default:
+                return (
+                    <div
+                        className={`flex-grow scroll-container touch-none overflow-hidden ${animationClass}`}
+                        onWheel={handleWheel}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        <FullCalendar
+                            ref={calendarRef}
+                            plugins={[dayGridPlugin, interactionPlugin]}
+                            initialView="dayGridMonth"
+                            headerToolbar={false}
+                            locale="th"
+                            events={events.length > 0 ? events : [
+                                { title: 'Meeting', date: new Date().toISOString().split('T')[0] },
+                                { title: 'Appointment', date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0] },
+                                { title: 'Deadline', date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0] }
+                            ]}
+                            dateClick={handleDateClick}
+                            eventClick={handleEventClick}
+                            height="100%"
+                            aspectRatio={1.1}
+                            fixedWeekCount={true}
+                            dayHeaderFormat={{ weekday: 'short' }}
+                            dayHeaderContent={(arg) => {
+                                const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+                                const dayName = days[arg.date.getDay()];
+                                const today = new Date();
+                                const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
+                                    pickerDate.getFullYear() === today.getFullYear();
+                                const isTodayDay = isTodayMonth && arg.date.getDay() === today.getDay();
+
+                                return (
+                                    <div className="flex flex-col items-center gap-1">
+                                        <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
+                                        {isTodayDay && (
+                                            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
+                                        )}
+                                    </div>
+                                );
+                            }}
+                        />
+                    </div>
+                );
+        }
+    };
 
     return (
-        <div className="pt-2 px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden">
-            {/* Header / Month Selector */}
-            <div className="flex justify-between items-center mb-2 shrink-0">
-                <button
-                    onClick={() => setIsMonthPickerOpen(true)}
-                    className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-base active:scale-95 transition-transform"
-                >
-                    {title}
-                    <ChevronDown size={18} className="text-slate-400" />
-                </button>
-                <div className="w-20 h-12 bg-white/40 backdrop-blur-sm rounded-full shadow-sm"></div>
-            </div>
+        <div className="pt-2 px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc]">
+            {/* Header — only show on home tab */}
+            {activeTab === "home" && (
+                <div className="flex justify-between items-center mb-2 shrink-0 h-12">
+                    <button
+                        onClick={() => setIsMonthPickerOpen(true)}
+                        className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-base active:scale-95 transition-transform"
+                    >
+                        {title}
+                        <ChevronDown size={18} className="text-slate-400" />
+                    </button>
+                    <div className="w-20 h-10 bg-white/40 backdrop-blur-sm rounded-full shadow-sm"></div>
+                </div>
+            )}
 
-            {/* Calendar Grid Container */}
-            <div 
-                className={`flex-grow scroll-container touch-none overflow-hidden ${animationClass}`} 
-                onWheel={handleWheel}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-            >
-                <FullCalendar
-                    ref={calendarRef}
-                    plugins={[dayGridPlugin, interactionPlugin]}
-                    initialView="dayGridMonth"
-                    headerToolbar={false}
-                    locale="th"
-                    events={[
-                        { title: 'Meeting', date: new Date().toISOString().split('T')[0] },
-                        { title: 'Appointment', date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0] },
-                        { title: 'Deadline', date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0] }
-                    ]}
-                    dateClick={handleDateClick}
-                    eventClick={handleEventClick}
-                    height="100%"
-                    aspectRatio={1.1}
-                    fixedWeekCount={true}
-                    dayHeaderFormat={{ weekday: 'short' }}
-                    dayHeaderContent={(arg) => {
-                        const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-                        const dayName = days[arg.date.getDay()];
-                        const today = new Date();
-                        const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
-                            pickerDate.getFullYear() === today.getFullYear();
-                        const isTodayDay = isTodayMonth && arg.date.getDay() === today.getDay();
+            {/* Content Area */}
+            {renderPageContent()}
 
-                        return (
-                            <div className="flex flex-col items-center gap-1">
-                                <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
-                                {isTodayDay && (
-                                    <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
-                                )}
-                            </div>
-                        );
-                    }}
-                />
+            {/* Always visible Navigation */}
+            <div className="mt-auto pt-2 pb-1">
+                <NavBar activeTab={activeTab} onTabChange={(tab) => {
+                    console.log("Setting Active Tab to:", tab);
+                    setActiveTab(tab);
+                }} />
             </div>
-            <NavBar />
 
             <EventModal
                 isOpen={isModalOpen}
@@ -270,25 +286,20 @@ const Calendar = () => {
                                 <ChevronRight size={24} className="text-slate-800" />
                             </button>
                         </div>
-
                         <div className="grid grid-cols-3 gap-y-6 gap-x-2 w-full mb-10">
-                            {THAI_MONTHS.map((month, index) => {
-                                const isSelected = pickerDate.getMonth() === index;
-                                return (
-                                    <button
-                                        key={month}
-                                        onClick={() => handleMonthSelect(index)}
-                                        className={`py-2 px-1 rounded-full text-center font-medium transition-all text-sm
-                                            ${isSelected
-                                                ? 'bg-primary text-white shadow-md shadow-primary/20 scale-105'
-                                                : 'text-slate-600 hover:bg-slate-50'}`}
-                                    >
-                                        {month}
-                                    </button>
-                                );
-                            })}
+                            {THAI_MONTHS.map((month, index) => (
+                                <button
+                                    key={month}
+                                    onClick={() => handleMonthSelect(index)}
+                                    className={`py-2 px-1 rounded-full text-center font-medium transition-all text-sm
+                                        ${pickerDate.getMonth() === index
+                                            ? 'bg-primary text-white shadow-md shadow-primary/20 scale-105'
+                                            : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    {month}
+                                </button>
+                            ))}
                         </div>
-
                         <button
                             onClick={handlePickerToday}
                             className="bg-white px-6 py-2 rounded-full shadow-lg border border-slate-100 text-slate-800 font-bold text-base active:scale-95 transition-transform"
@@ -303,4 +314,3 @@ const Calendar = () => {
 };
 
 export default Calendar;
-
