@@ -25,17 +25,29 @@ const settingItems = [
   },
 ];
 
-export default function SettingPage() {
+export default function SettingPage({ user }: { user: any }) {
   return (
     <div className="flex-grow overflow-y-auto px-1 pb-2">
       {/* Profile card */}
       <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-5 mb-4 flex items-center gap-4 shadow-sm">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-md shrink-0">
-          <User size={26} className="text-white" />
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-md overflow-hidden shrink-0">
+          {user?.pictureUrl ? (
+            <img 
+              src={user.pictureUrl} 
+              alt={user.displayName} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User size={26} className="text-white" />
+          )}
         </div>
         <div>
-          <p className="font-bold text-slate-800 text-base">ผู้ใช้งาน</p>
-          <p className="text-slate-400 text-sm">ลงชื่อเข้าใช้งานด้วย LINE</p>
+          <p className="font-bold text-slate-800 text-base">
+            {user ? user.displayName : "ผู้ใช้งาน"}
+          </p>
+          <p className="text-slate-400 text-sm">
+            {user ? "เข้าสู่ระบบด้วย LINE แล้ว" : "ลงชื่อเข้าใช้งานด้วย LINE"}
+          </p>
         </div>
       </div>
 

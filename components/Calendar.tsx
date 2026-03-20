@@ -9,7 +9,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, where } from "firebase/firestore";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import EventModal from "./EventModal";
 import { initLiff, getProfile } from "@/lib/liff";
 import { format, setMonth, setYear } from "date-fns";
@@ -38,6 +38,7 @@ const Calendar = () => {
     const [isPaginating, setIsPaginating] = useState(false);
     const [animationClass, setAnimationClass] = useState("");
     const [activeTab, setActiveTab] = useState("home");
+    const [isAddingEvent, setIsAddingEvent] = useState(false);
     const lastScrollTime = useRef(0);
     const touchStartRef = useRef({ x: 0, y: 0 });
 
@@ -48,7 +49,7 @@ const Calendar = () => {
             setUser(profile);
             console.log("LIFF Profile loaded:", profile);
         };
-        startup();
+        // startup();
     }, []);
 
     useEffect(() => {
@@ -176,7 +177,7 @@ const Calendar = () => {
         console.log("Rendering Tab:", activeTab);
         switch (activeTab) {
             case "setting":
-                return <SettingPage />;
+                return <SettingPage user={user} />;
             case "result":
                 return <ResultPage />;
             case "group":
@@ -184,57 +185,61 @@ const Calendar = () => {
             case "home":
             default:
                 return (
-                    <div
-                        className={`flex-grow scroll-container touch-none overflow-hidden ${animationClass}`}
-                        onWheel={handleWheel}
-                        onTouchStart={handleTouchStart}
-                        onTouchEnd={handleTouchEnd}
-                    >
-                        <FullCalendar
-                            ref={calendarRef}
-                            plugins={[dayGridPlugin, interactionPlugin]}
-                            initialView="dayGridMonth"
-                            headerToolbar={false}
-                            locale="th"
-                            events={events.length > 0 ? events : [
-                                { title: 'Meeting', date: new Date().toISOString().split('T')[0] },
-                                { title: 'Appointment', date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0] },
-                                { title: 'Deadline', date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0] }
-                            ]}
-                            dateClick={handleDateClick}
-                            eventClick={handleEventClick}
-                            height="100%"
-                            aspectRatio={1.1}
-                            fixedWeekCount={true}
-                            dayHeaderFormat={{ weekday: 'short' }}
-                            dayHeaderContent={(arg) => {
-                                const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-                                const dayName = days[arg.date.getDay()];
-                                const today = new Date();
-                                const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
-                                    pickerDate.getFullYear() === today.getFullYear();
-                                const isTodayDay = isTodayMonth && arg.date.getDay() === today.getDay();
+                    <div className={`flex-grow flex flex-col overflow-hidden ${animationClass}`}>
+                        <div 
+                            className="flex-grow overflow-hidden transition-all duration-500"
+                            onWheel={handleWheel}
+                            onTouchStart={handleTouchStart}
+                            onTouchEnd={handleTouchEnd}
+                        >
+                            <FullCalendar
+                                ref={calendarRef}
+                                plugins={[dayGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                headerToolbar={false}
+                                locale="th"
+                                events={events.length > 0 ? events : [
+                                    { title: 'Meeting', date: new Date().toISOString().split('T')[0] },
+                                    { title: 'Appointment', date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0] },
+                                    { title: 'Deadline', date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0] }
+                                ]}
+                                dateClick={handleDateClick}
+                                eventClick={handleEventClick}
+                                height={isAddingEvent ? "auto" : "100%"}
+                                aspectRatio={isAddingEvent ? 1.5 : undefined}
+                                expandRows={true}
+                                fixedWeekCount={true}
+                                dayHeaderFormat={{ weekday: 'short' }}
+                                dayHeaderContent={(arg) => {
+                                    const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+                                    const dayName = days[arg.date.getDay()];
+                                    const today = new Date();
+                                    const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
+                                        pickerDate.getFullYear() === today.getFullYear();
+                                    const isTodayDay = isTodayMonth && arg.date.getDay() === today.getDay();
 
-                                return (
-                                    <div className="flex flex-col items-center gap-1">
-                                        <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
-                                        {isTodayDay && (
-                                            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
-                                        )}
-                                    </div>
-                                );
-                            }}
-                        />
+                                    return (
+                                        <div className="flex flex-col items-center gap-1">
+                                            <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
+                                            {isTodayDay && (
+                                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
+                                            )}
+                                        </div>
+                                    );
+                                }}
+                            />
+                        </div>
+                        <div className={`transition-all duration-500 ease-in-out ${isAddingEvent ? "h-[240px]" : "h-0"}`} />
                     </div>
                 );
         }
     };
 
     return (
-        <div className="pt-2 px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc]">
+        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] transition-all duration-500 ${isAddingEvent ? "pt-0" : "pt-2"}`}>
             {/* Header — only show on home tab */}
             {activeTab === "home" && (
-                <div className="flex justify-between items-center mb-2 shrink-0 h-12">
+                <div className={`flex justify-between items-center shrink-0 transition-all duration-500 ease-in-out ${isAddingEvent ? "h-0 mb-0 pointer-events-none opacity-0 overflow-hidden" : "h-12 mb-2 opacity-100"}`}>
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
                         className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-base active:scale-95 transition-transform"
@@ -242,7 +247,22 @@ const Calendar = () => {
                         {title}
                         <ChevronDown size={18} className="text-slate-400" />
                     </button>
-                    <div className="w-20 h-10 bg-white/40 backdrop-blur-sm rounded-full shadow-sm"></div>
+                    <div className="flex items-center gap-2">
+                        <button className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-slate-700 font-bold text-sm active:scale-95 transition-transform">
+                            ปฏิทินของฉัน
+                        </button>
+                        <button
+                            onClick={() => {
+                                setSelectedDate(format(new Date(), "yyyy-MM-dd"));
+                                setSelectedEvent(null);
+                                setIsAddingEvent(true);
+                                setIsModalOpen(true);
+                            }}
+                            className="bg-[#C2185B] text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-[#AD1457] shrink-0"
+                        >
+                            <Plus size={28} strokeWidth={2.5} />
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -250,7 +270,7 @@ const Calendar = () => {
             {renderPageContent()}
 
             {/* Always visible Navigation */}
-            <div className="mt-auto pt-2 pb-1">
+            <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isAddingEvent ? "translate-y-24 opacity-0" : "translate-y-0 opacity-100"}`}>
                 <NavBar activeTab={activeTab} onTabChange={(tab) => {
                     console.log("Setting Active Tab to:", tab);
                     setActiveTab(tab);
@@ -259,7 +279,10 @@ const Calendar = () => {
 
             <EventModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setIsAddingEvent(false);
+                }}
                 selectedDate={selectedDate}
                 userId={user?.userId}
                 initialEvent={selectedEvent}
