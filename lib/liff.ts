@@ -1,15 +1,10 @@
 import liff from "@line/liff";
 
-export const initLiff = async () => {
-    // Add your LIFF ID here
-    const liffId = "2009451557-lZpkB3ag";
-    if (!liffId) {
-        console.warn("LIFF ID is not defined.");
-        return;
-    }
+const LIFF_ID = "2009451557-lZpkB3ag";
 
+export const initLiff = async () => {
     try {
-        await liff.init({ liffId });
+        await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
             liff.login();
         }
@@ -23,10 +18,6 @@ export const getProfile = async () => {
         return await liff.getProfile();
     }
     return null;
-};
-
-export const getContext = () => {
-    return liff.getContext();
 };
 
 export const shareEvent = async (eventData: {
