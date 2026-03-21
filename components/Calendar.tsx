@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import SettingPage from "./SettingPage";
 import ResultPage from "./ResultPage";
 import GroupPage from "./GroupPage";
@@ -11,9 +11,9 @@ import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, where } from "firebase/firestore";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import EventModal from "./EventModal";
-import { initLiff, getProfile } from "@/lib/liff";
 import { format, setMonth, setYear } from "date-fns";
 import NavBar from "./NavBar";
+import { initLiff, getProfile } from "@/lib/liff";
 
 // --- ปรับความเร็ว Animation ตรงนี้ ---
 const SCROLL_DEBOUNCE = 800;
@@ -25,8 +25,22 @@ const THAI_MONTHS = [
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
 
+const THAI_DAY_NAMES = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
+
+const _today = new Date();
+const FALLBACK_EVENTS = [
+    { title: 'Meeting', date: format(_today, "yyyy-MM-dd") },
+    { title: 'Appointment', date: format(new Date(_today.getFullYear(), _today.getMonth(), _today.getDate() + 2), "yyyy-MM-dd") },
+    { title: 'Deadline', date: format(new Date(_today.getFullYear(), _today.getMonth(), _today.getDate() - 3), "yyyy-MM-dd") },
+];
+
 const Calendar = () => {
     const calendarRef = useRef<FullCalendar>(null);
+    const calendarWrapperRef = useRef<HTMLDivElement>(null);
+    const navbarWrapperRef = useRef<HTMLDivElement>(null);
+    const [navbarHeight, setNavbarHeight] = useState(80); // initial estimate
     const [events, setEvents] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -42,14 +56,40 @@ const Calendar = () => {
     const lastScrollTime = useRef(0);
     const touchStartRef = useRef({ x: 0, y: 0 });
 
+    // Measure actual navbar height to compute exact available space for the calendar
     useEffect(() => {
-        const startup = async () => {
+        const el = navbarWrapperRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(entries => {
+            setNavbarHeight(entries[0].borderBoxSize[0]?.blockSize ?? entries[0].contentRect.height);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    // Compute the total calendar height to pass to FullCalendar
+    // Known fixed measurements in full view:
+    //   outer padding: pt-2(8) + pb-2(8) = 16px
+    //   header:        h-12(48) + mb-2(8) = 56px
+    //   navbar:        measured via navbarWrapperRef
+    const MODAL_APPROX_HEIGHT = 230; // height of event modal after padding reduction
+    const OUTER_PADDING = 16;        // pt-2 + pb-2 on main container
+    const HEADER_SPACE = 56;         // h-12 + mb-2 on header
+
+    const calendarHeight = isAddingEvent
+        ? (typeof window !== 'undefined' ? window.innerHeight - MODAL_APPROX_HEIGHT - 5 : 400)
+        : (typeof window !== 'undefined'
+            ? window.innerHeight - OUTER_PADDING - HEADER_SPACE - navbarHeight
+            : 600);
+
+    // Initialize LINE LIFF and set user profile
+    useEffect(() => {
+        const setupLiff = async () => {
             await initLiff();
             const profile = await getProfile();
-            setUser(profile);
-            console.log("LIFF Profile loaded:", profile);
+            if (profile) setUser(profile);
         };
-        // startup();
+        setupLiff();
     }, []);
 
     useEffect(() => {
@@ -68,34 +108,36 @@ const Calendar = () => {
         return () => unsubscribe();
     }, [user]);
 
-    const handleDateClick = (arg: any) => {
+    const handleDateClick = useCallback((arg: any) => {
         setSelectedDate(arg.dateStr);
         setSelectedEvent(null);
+        setIsAddingEvent(true);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleEventClick = (arg: any) => {
+    const handleEventClick = useCallback((arg: any) => {
         const event = events.find(e => e.id === arg.event.id);
         if (event) {
             const start = event.start instanceof Date ? event.start : event.start.toDate();
             setSelectedDate(format(start, "yyyy-MM-dd"));
             setSelectedEvent(event);
+            setIsAddingEvent(true);
             setIsModalOpen(true);
         }
-    };
+    }, [events]);
 
-    const updateTitle = () => {
+    const updateTitle = useCallback(() => {
         if (calendarRef.current) {
             const api = calendarRef.current.getApi();
             const date = api.getDate();
             const month = date.toLocaleString("th-TH", { month: "long" });
             const year = date.getFullYear() + 543;
             setTitle(`${month} ${year}`);
-            setPickerDate(date);
+            setPickerDate(prev => prev.getTime() !== date.getTime() ? date : prev);
         }
-    };
+    }, []);
 
-    const handleMonthSelect = (monthIndex: number) => {
+    const handleMonthSelect = useCallback((monthIndex: number) => {
         if (calendarRef.current) {
             const api = calendarRef.current.getApi();
             const newDate = setMonth(pickerDate, monthIndex);
@@ -103,78 +145,60 @@ const Calendar = () => {
             setIsMonthPickerOpen(false);
             updateTitle();
         }
-    };
+    }, [pickerDate, updateTitle]);
 
-    const handleYearChange = (offset: number) => {
+    const handleYearChange = useCallback((offset: number) => {
         setPickerDate(prev => setYear(prev, prev.getFullYear() + offset));
-    };
+    }, []);
 
-    const handlePickerToday = () => {
+    const handlePickerToday = useCallback(() => {
         if (calendarRef.current) {
             calendarRef.current.getApi().today();
             setIsMonthPickerOpen(false);
             updateTitle();
         }
-    };
+    }, [updateTitle]);
 
-    const handleWheel = (e: React.WheelEvent) => {
-        const now = Date.now();
-        if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
-
-        if (calendarRef.current && Math.abs(e.deltaX) > 20) {
-            const api = calendarRef.current.getApi();
-            setIsPaginating(true);
-            const isNext = e.deltaX > 0;
-            setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
+    const paginate = useCallback((isNext: boolean) => {
+        if (!calendarRef.current) return;
+        const api = calendarRef.current.getApi();
+        setIsPaginating(true);
+        setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
+        setTimeout(() => {
+            if (isNext) api.next(); else api.prev();
+            updateTitle();
+            setAnimationClass(isNext ? "animate-slide-in-right" : "animate-slide-in-left");
+            lastScrollTime.current = Date.now();
             setTimeout(() => {
-                if (isNext) api.next(); else api.prev();
-                updateTitle();
-                setAnimationClass(isNext ? "animate-slide-in-right" : "animate-slide-in-left");
-                lastScrollTime.current = now;
-                setTimeout(() => {
-                    setIsPaginating(false);
-                    setAnimationClass("");
-                }, TRANSITION_DELAY);
+                setIsPaginating(false);
+                setAnimationClass("");
             }, TRANSITION_DELAY);
-        }
-    };
+        }, TRANSITION_DELAY);
+    }, [updateTitle]);
+
+    const handleWheel = useCallback((e: React.WheelEvent) => {
+        if (Date.now() - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
+        if (Math.abs(e.deltaX) > 20) paginate(e.deltaX > 0);
+    }, [isPaginating, paginate]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     };
 
-    const handleTouchEnd = (e: React.TouchEvent) => {
-        const now = Date.now();
-        if (now - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
-        const touchEndX = e.changedTouches[0].clientX;
-        const diffX = touchStartRef.current.x - touchEndX;
-        if (Math.abs(diffX) > 50) {
-            if (calendarRef.current) {
-                const api = calendarRef.current.getApi();
-                setIsPaginating(true);
-                const isNext = diffX > 0;
-                setAnimationClass(isNext ? "animate-slide-out-left" : "animate-slide-out-right");
-                setTimeout(() => {
-                    if (isNext) api.next(); else api.prev();
-                    updateTitle();
-                    setAnimationClass(isNext ? "animate-slide-in-right" : "animate-slide-in-left");
-                    lastScrollTime.current = now;
-                    setTimeout(() => {
-                        setIsPaginating(false);
-                        setAnimationClass("");
-                    }, TRANSITION_DELAY);
-                }, TRANSITION_DELAY);
-            }
-        }
-    };
+    const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+        if (Date.now() - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
+        const diffX = touchStartRef.current.x - e.changedTouches[0].clientX;
+        if (Math.abs(diffX) > 50) paginate(diffX > 0);
+    }, [isPaginating, paginate]);
 
     useEffect(() => {
         const timer = setTimeout(updateTitle, 100);
         return () => clearTimeout(timer);
-    }, [activeTab]); // Update when switching back to home
+    }, [activeTab, updateTitle]);
+
+
 
     const renderPageContent = () => {
-        console.log("Rendering Tab:", activeTab);
         switch (activeTab) {
             case "setting":
                 return <SettingPage user={user} />;
@@ -186,33 +210,29 @@ const Calendar = () => {
             default:
                 return (
                     <div className={`flex-grow flex flex-col overflow-hidden ${animationClass}`}>
-                        <div 
-                            className="flex-grow overflow-hidden transition-all duration-500"
+                        <div
+                            ref={calendarWrapperRef}
+                            className="overflow-hidden shrink-0"
+                            style={{ height: calendarHeight }}
                             onWheel={handleWheel}
                             onTouchStart={handleTouchStart}
                             onTouchEnd={handleTouchEnd}
                         >
                             <FullCalendar
                                 ref={calendarRef}
-                                plugins={[dayGridPlugin, interactionPlugin]}
+                                plugins={CALENDAR_PLUGINS}
                                 initialView="dayGridMonth"
                                 headerToolbar={false}
                                 locale="th"
-                                events={events.length > 0 ? events : [
-                                    { title: 'Meeting', date: new Date().toISOString().split('T')[0] },
-                                    { title: 'Appointment', date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0] },
-                                    { title: 'Deadline', date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0] }
-                                ]}
+                                events={events.length > 0 ? events : FALLBACK_EVENTS}
                                 dateClick={handleDateClick}
                                 eventClick={handleEventClick}
-                                height={isAddingEvent ? "auto" : "100%"}
-                                aspectRatio={isAddingEvent ? 1.5 : undefined}
+                                height={calendarHeight}
                                 expandRows={true}
                                 fixedWeekCount={true}
                                 dayHeaderFormat={{ weekday: 'short' }}
                                 dayHeaderContent={(arg) => {
-                                    const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-                                    const dayName = days[arg.date.getDay()];
+                                    const dayName = THAI_DAY_NAMES[arg.date.getDay()];
                                     const today = new Date();
                                     const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
                                         pickerDate.getFullYear() === today.getFullYear();
@@ -229,7 +249,6 @@ const Calendar = () => {
                                 }}
                             />
                         </div>
-                        <div className={`transition-all duration-500 ease-in-out ${isAddingEvent ? "h-[240px]" : "h-0"}`} />
                     </div>
                 );
         }
@@ -270,11 +289,8 @@ const Calendar = () => {
             {renderPageContent()}
 
             {/* Always visible Navigation */}
-            <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isAddingEvent ? "translate-y-24 opacity-0" : "translate-y-0 opacity-100"}`}>
-                <NavBar activeTab={activeTab} onTabChange={(tab) => {
-                    console.log("Setting Active Tab to:", tab);
-                    setActiveTab(tab);
-                }} />
+            <div ref={navbarWrapperRef} className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isAddingEvent ? "translate-y-24 opacity-0" : "translate-y-0 opacity-100"}`}>
+                <NavBar activeTab={activeTab} onTabChange={setActiveTab} />
             </div>
 
             <EventModal

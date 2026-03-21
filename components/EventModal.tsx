@@ -78,31 +78,31 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, initialEvent }: Eve
 
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
-            <div className={`bg-white w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 pt-7 pb-8 transition-transform duration-500 ease-out pointer-events-auto transform ${isOpen ? "translate-y-0" : "translate-y-full"}`}>
+            <div className={`bg-white w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 pt-5 pb-5 transition-transform duration-500 ease-out pointer-events-auto transform ${isOpen ? "translate-y-0" : "translate-y-full"}`}>
                 <div className="relative flex flex-col items-center">
                     <button 
                         onClick={onClose}
                         className="absolute right-0 top-0 text-slate-800 hover:text-slate-400 p-2 transition-colors"
                     >
-                        <X size={24} strokeWidth={3} />
+                        <X size={20} strokeWidth={3} />
                     </button>
 
-                    <h2 className="text-xl font-bold text-slate-800 mb-5">
+                    <h2 className="text-lg font-bold text-slate-800 mb-3">
                         {getThaiHeader()}
                     </h2>
 
-                    <div className="flex justify-between w-full mb-8 px-2">
+                    <div className="flex justify-between w-full mb-5 px-2">
                         {CATEGORIES.map((cat) => (
-                            <div key={cat.id} className="flex flex-col items-center gap-3">
+                            <div key={cat.id} className="flex flex-col items-center gap-2">
                                 <button
                                     onClick={() => setSelectedCategory(cat.id)}
-                                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg active:scale-90
+                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg active:scale-90
                                         ${selectedCategory === cat.id ? "scale-110 ring-4 ring-slate-100" : "scale-100 hover:scale-105"}`}
                                     style={{ backgroundColor: cat.color }}
                                 >
-                                    <cat.icon size={26} className="text-white" strokeWidth={2.5} />
+                                    <cat.icon size={22} className="text-white" strokeWidth={2.5} />
                                 </button>
-                                <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{cat.label}</span>
+                                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{cat.label}</span>
                             </div>
                         ))}
                     </div>
@@ -111,14 +111,14 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, initialEvent }: Eve
                         <button
                             onClick={handleDelete}
                             disabled={loading || !initialEvent}
-                            className="flex-1 bg-white border border-slate-100 py-2.5 rounded-full font-bold text-lg text-slate-800 shadow-sm active:scale-95 transition-all disabled:opacity-30"
+                            className="flex-1 bg-white border border-slate-100 py-2 rounded-full font-bold text-base text-slate-800 shadow-sm active:scale-95 transition-all disabled:opacity-30"
                         >
                             ลบ
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={loading || !selectedCategory}
-                            className="flex-1 bg-white border border-slate-100 py-2.5 rounded-full font-bold text-lg text-slate-800 shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                            className="flex-1 bg-white border border-slate-100 py-2 rounded-full font-bold text-base text-slate-800 shadow-sm active:scale-95 transition-all disabled:opacity-50"
                         >
                             {loading ? "..." : "ตกลง"}
                         </button>

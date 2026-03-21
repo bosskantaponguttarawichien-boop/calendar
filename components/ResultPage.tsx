@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { TrendingUp, Calendar, CheckCircle2, Clock, ChevronRight } from "lucide-react";
 
 export default function ResultPage() {
@@ -53,7 +52,7 @@ export default function ResultPage() {
             }`}
           >
             <div className="flex items-center gap-4 text-left">
-              <div className={`w-2 h-2 rounded-full ${activity.status === "เสร็จสิ้น" ? "bg-green-400Shadow" : "bg-orange-400"}`} />
+              <div className={`w-2 h-2 rounded-full ${activity.status === "เสร็จสิ้น" ? "bg-green-400" : "bg-orange-400"}`} />
               <div>
                 <p className="text-slate-800 font-bold text-sm tracking-tight">{activity.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
