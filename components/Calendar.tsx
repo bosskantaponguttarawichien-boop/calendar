@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, where } from "firebase/firestore";
 import { ChevronDown, Plus } from "lucide-react";
 import EventModal from "./EventModal";
+import EventSummaryModal from "./EventSummaryModal";
 import MonthPickerModal from "./MonthPickerModal";
 import { format, setMonth, setYear } from "date-fns";
 import NavBar from "./NavBar";
@@ -39,6 +40,7 @@ const Calendar = () => {
     const calendarWrapperRef = useRef<HTMLDivElement>(null);
     const [events, setEvents] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
@@ -82,8 +84,10 @@ const Calendar = () => {
     const handleDateClick = useCallback((arg: any) => {
         setSelectedDate(arg.dateStr);
         setSelectedEvent(null);
-        setIsModalOpen(true);
-    }, []);
+        if (!isModalOpen) {
+            setIsSummaryModalOpen(true);
+        }
+    }, [isModalOpen]);
 
     const handleEventClick = useCallback((arg: any) => {
         const event = events.find(e => e.id === arg.event.id);
@@ -91,7 +95,7 @@ const Calendar = () => {
             const start = event.start instanceof Date ? event.start : event.start.toDate();
             setSelectedDate(format(start, "yyyy-MM-dd"));
             setSelectedEvent(event);
-            setIsModalOpen(true);
+            setIsSummaryModalOpen(true);
         }
     }, [events]);
 
@@ -156,10 +160,10 @@ const Calendar = () => {
     };
 
     const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-        if (isModalOpen || Date.now() - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
+        if (isModalOpen || isSummaryModalOpen || Date.now() - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
         const diffX = touchStartRef.current.x - e.changedTouches[0].clientX;
         if (Math.abs(diffX) > 50) paginate(diffX > 0);
-    }, [isModalOpen, isPaginating, paginate]);
+    }, [isModalOpen, isSummaryModalOpen, isPaginating, paginate]);
 
     useEffect(() => {
         const timer = setTimeout(updateTitle, 100);
@@ -250,6 +254,7 @@ const Calendar = () => {
                             onClick={() => {
                                 setSelectedDate(format(new Date(), "yyyy-MM-dd"));
                                 setSelectedEvent(null);
+                                setIsSummaryModalOpen(false);
                                 setIsModalOpen(true);
                             }}
                             className="bg-[#C2185B] text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-[#AD1457] shrink-0"
@@ -267,6 +272,17 @@ const Calendar = () => {
             <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isModalOpen ? "translate-y-24 opacity-0 h-0 overflow-hidden" : "translate-y-0 opacity-100"}`}>
                 <NavBar activeTab={activeTab} onTabChange={setActiveTab} />
             </div>
+
+            <EventSummaryModal
+                isOpen={isSummaryModalOpen}
+                onClose={() => setIsSummaryModalOpen(false)}
+                selectedDate={selectedDate}
+                events={events}
+                onEdit={() => {
+                    setIsSummaryModalOpen(false);
+                    setIsModalOpen(true);
+                }}
+            />
 
             <EventModal
                 isOpen={isModalOpen}
