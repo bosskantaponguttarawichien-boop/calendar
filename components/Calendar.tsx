@@ -17,8 +17,8 @@ import NavBar from "./NavBar";
 import { initLiff, getProfile } from "@/lib/liff";
 
 // --- ปรับความเร็ว Animation ตรงนี้ ---
-const SCROLL_DEBOUNCE = 800;
-const TRANSITION_DELAY = 300;
+const SCROLL_DEBOUNCE = 200;
+const TRANSITION_DELAY = 150;
 // ---------------------------------
 
 const THAI_DAY_NAMES = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
@@ -151,14 +151,15 @@ const Calendar = () => {
     }, [isPaginating, paginate]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
+        if (isModalOpen) return;
         touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     };
 
     const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-        if (Date.now() - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
+        if (isModalOpen || Date.now() - lastScrollTime.current < SCROLL_DEBOUNCE || isPaginating) return;
         const diffX = touchStartRef.current.x - e.changedTouches[0].clientX;
         if (Math.abs(diffX) > 50) paginate(diffX > 0);
-    }, [isPaginating, paginate]);
+    }, [isModalOpen, isPaginating, paginate]);
 
     useEffect(() => {
         const timer = setTimeout(updateTitle, 100);
@@ -182,8 +183,8 @@ const Calendar = () => {
                         <div
                             ref={calendarWrapperRef}
                             className={isModalOpen ? "absolute inset-x-0 top-0 overflow-hidden" : "h-full w-full overflow-hidden"}
-                            style={{ 
-                                bottom: isModalOpen ? MODAL_APPROX_HEIGHT : 0 
+                            style={{
+                                bottom: isModalOpen ? MODAL_APPROX_HEIGHT : 0
                             }}
                             onWheel={handleWheel}
                             onTouchStart={handleTouchStart}
@@ -202,7 +203,7 @@ const Calendar = () => {
                                 expandRows={true}
                                 fixedWeekCount={true}
                                 dayHeaderFormat={{ weekday: 'short' }}
-                                dayHeaderContent={(arg) => {
+                                 dayHeaderContent={(arg) => {
                                     const dayName = THAI_DAY_NAMES[arg.date.getDay()];
                                     const today = new Date();
                                     const isTodayMonth = pickerDate.getMonth() === today.getMonth() &&
@@ -215,8 +216,12 @@ const Calendar = () => {
                                             {isTodayDay && (
                                                 <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
                                             )}
-                                        </div>
+                                         </div>
                                     );
+                                }}
+                                dayCellClassNames={(arg) => {
+                                    const dateStr = format(arg.date, "yyyy-MM-dd");
+                                    return dateStr === selectedDate ? "selected-day" : "";
                                 }}
                             />
                         </div>

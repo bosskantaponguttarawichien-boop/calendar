@@ -64,19 +64,19 @@
 }
 
 .animate-slide-out-left {
-  animation: slideOutLeft 0.2s forwards ease-in;
+  animation: slideOutLeft 0.15s forwards ease-in;
 }
 
 .animate-slide-in-right {
-  animation: slideInRight 0.2s forwards ease-out;
+  animation: slideInRight 0.15s forwards ease-out;
 }
 
 .animate-slide-out-right {
-  animation: slideOutRight 0.2s forwards ease-in;
+  animation: slideOutRight 0.15s forwards ease-in;
 }
 
 .animate-slide-in-left {
-  animation: slideInLeft 0.2s forwards ease-out;
+  animation: slideInLeft 0.15s forwards ease-out;
 }
 
 body {
@@ -199,17 +199,20 @@ html {
 
 
 
-/* Current/Active date number circle */
-.fc .fc-daygrid-day.fc-day-today {
-  background-color: transparent !important;
-  /* Ensure cell background is transparent */
+/* Current/Active date number circle (Today) - RED TEXT ALWAYS */
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  background-color: #f1f5f9 !important;
+  color: #ef4444 !important;
+  font-weight: 800 !important;
 }
 
-.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-  background-color: #ef4444 !important;
-  /* Red highlight */
-  color: white !important;
+/* Selected day highlight - BLACK CIRCLE (text white by default) */
+.fc .fc-daygrid-day.selected-day .fc-daygrid-day-number {
+  background-color: #0f172a !important;
+  color: white; /* No !important here so today's red can override if needed */
 }
+
+/* If Today and Selected overlap, keep background black but use Red text from above */
 
 /* Events as small dots below the number */
 .fc-daygrid-day-events {

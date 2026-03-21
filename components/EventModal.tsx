@@ -25,6 +25,20 @@ const CATEGORIES = [
 const EventModal = ({ isOpen, onClose, selectedDate, userId, initialEvent }: EventModalProps) => {
     const [loading, setLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [shouldRender, setShouldRender] = useState(isOpen);
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setShouldRender(true);
+            const timer = setTimeout(() => setShowModal(true), 10);
+            return () => clearTimeout(timer);
+        } else {
+            setShowModal(false);
+            const timer = setTimeout(() => setShouldRender(false), 500);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -32,7 +46,7 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, initialEvent }: Eve
         }
     }, [isOpen]);
 
-    if (!isOpen) return null;
+    if (!shouldRender) return null;
 
     const getThaiHeader = () => {
         if (!selectedDate) return "";
@@ -78,7 +92,8 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, initialEvent }: Eve
 
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
-            <div className={`bg-white w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 pt-5 pb-5 transition-transform duration-500 ease-out pointer-events-auto transform ${isOpen ? "translate-y-0" : "translate-y-full"}`}>
+            {/* Modal Sheet */}
+            <div className={`bg-white w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 pt-5 pb-5 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
                 <div className="relative flex flex-col items-center">
                     <button 
                         onClick={onClose}

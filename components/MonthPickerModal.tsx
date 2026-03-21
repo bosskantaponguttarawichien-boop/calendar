@@ -4,8 +4,8 @@ import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const THAI_MONTHS = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+    'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
 ];
 
 interface MonthPickerModalProps {
@@ -23,28 +23,28 @@ export default function MonthPickerModal({ pickerDate, onClose, onYearChange, on
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-[40px] w-full max-w-sm shadow-2xl p-8 flex flex-col items-center"
+                className="bg-white rounded-[32px] w-full max-w-[280px] shadow-2xl p-6 flex flex-col items-center"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between w-full mb-8 px-4">
-                    <button onClick={() => onYearChange(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <ChevronLeft size={24} className="text-slate-800" />
+                <div className="flex items-center justify-between w-full mb-4 px-2">
+                    <button onClick={() => onYearChange(-1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
+                        <ChevronLeft size={20} className="text-slate-800" />
                     </button>
-                    <span className="text-2xl font-bold text-slate-800">
+                    <span className="text-xl font-bold text-slate-800">
                         {pickerDate.getFullYear() + 543}
                     </span>
-                    <button onClick={() => onYearChange(1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <ChevronRight size={24} className="text-slate-800" />
+                    <button onClick={() => onYearChange(1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
+                        <ChevronRight size={20} className="text-slate-800" />
                     </button>
                 </div>
-                <div className="grid grid-cols-3 gap-y-6 gap-x-2 w-full mb-10">
+                <div className="grid grid-cols-3 gap-y-3 gap-x-2 w-full mb-6 text-center">
                     {THAI_MONTHS.map((month, index) => (
                         <button
                             key={month}
                             onClick={() => onMonthSelect(index)}
-                            className={`py-2 px-1 rounded-full text-center font-medium transition-all text-sm
+                            className={`py-2 rounded-full font-medium transition-all text-sm
                                 ${pickerDate.getMonth() === index
-                                    ? 'bg-primary text-white shadow-md shadow-primary/20 scale-105'
+                                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20 active:scale-95'
                                     : 'text-slate-600 hover:bg-slate-50'}`}
                         >
                             {month}
@@ -53,7 +53,7 @@ export default function MonthPickerModal({ pickerDate, onClose, onYearChange, on
                 </div>
                 <button
                     onClick={onToday}
-                    className="bg-white px-6 py-2 rounded-full shadow-lg border border-slate-100 text-slate-800 font-bold text-base active:scale-95 transition-transform"
+                    className="bg-white px-5 py-1.5 rounded-full shadow-md border border-slate-100 text-slate-800 font-bold text-sm active:scale-95 transition-transform"
                 >
                     เลือกวันนี้
                 </button>
