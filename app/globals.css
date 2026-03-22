@@ -154,7 +154,7 @@ html {
 /* Date cells as vertical pills */
 .fc .fc-daygrid-day {
   /* Extremely compact padding for modal view on small screens */
-  padding: 1px 1px !important;
+  padding: 1px 2px !important;
 }
 
 .fc .fc-daygrid-day-frame {
@@ -166,13 +166,20 @@ html {
   background-color: white !important;
   border-radius: 9999px !important;
   margin: 0 !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05) !important;
-  transition: transform 0.2s;
+  border: 4px solid white !important;
+  box-shadow: 0 8px 20px -5px rgb(0 0 0 / 0.08) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden !important;
+  position: relative;
+}
+
+.fc .fc-daygrid-day.has-event .fc-daygrid-day-frame {
+  background-color: var(--day-bg) !important;
 }
 
 .fc .fc-daygrid-day-frame:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.02);
+  z-index: 20;
 }
 
 .fc .fc-daygrid-day-top {
@@ -180,7 +187,7 @@ html {
   width: 100% !important;
   display: flex !important;
   justify-content: center !important;
-  padding-top: 4px !important;
+  padding-top: 2px !important;
 }
 
 /* Make the actual table cell transparent */
@@ -188,34 +195,47 @@ html {
   background-color: transparent !important;
 }
 
-/* Date number circle */
-.fc .fc-daygrid-day-number {
+/* Ensure parents don't clip or constrain the absolute-filled shift background */
+.fc-daygrid-day-top, 
+.fc-daygrid-day-number,
+.fc-daygrid-day-events, 
+.fc-daygrid-day-bg,
+.fc-daygrid-day-content {
+    display: contents !important;
+}
+
+/* Custom date circle inside our pill content */
+.pill-date-circle {
   background-color: #f1f5f9;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex !important;
   align-items: center;
   justify-content: center;
   padding: 0 !important;
   color: #1e293b;
-  font-size: 0.70rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 800;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
-
+/* When has event, the number circle should be white */
+.fc .fc-daygrid-day.has-event .pill-date-circle {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
 
 /* Current/Active date number circle (Today) - RED TEXT ALWAYS */
-.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-  background-color: #f1f5f9 !important;
+.fc .fc-daygrid-day.fc-day-today .pill-date-circle {
   color: #ef4444 !important;
-  font-weight: 800 !important;
+  border: 2px solid #ef444420 !important;
 }
 
-/* Selected day highlight - BLACK CIRCLE (text white by default) */
-.fc .fc-daygrid-day.selected-day .fc-daygrid-day-number {
+/* Selected day highlight - BLACK BORDER or GLOW? */
+.fc .fc-daygrid-day.selected-day .pill-date-circle {
   background-color: #0f172a !important;
-  color: white; /* No !important here so today's red can override if needed */
+  color: white !important;
 }
 
 /* If Today and Selected overlap, keep background black but use Red text from above */
@@ -291,4 +311,13 @@ html {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
+}
+
+/* --- EXTRA SPECIFIC OVERRIDES FOR SELECTED DAY --- */
+.fc .fc-daygrid-day.selected-day .fc-daygrid-day-frame,
+.fc .fc-daygrid-day.selected-day.fc-day-today .fc-daygrid-day-frame {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 5px !important; /* Compensate for removed 4px border + 1px original padding */
+    background-color: white !important;
 }

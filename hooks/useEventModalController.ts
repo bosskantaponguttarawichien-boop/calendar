@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, writeBatch, doc } from "firebase/firestore";
 import { format, parseISO, addDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
@@ -59,9 +59,10 @@ export function useEventModalController({
 
         setLoading(true);
         try {
+            const batch = writeBatch(db);
+            
             for (const date of datesToSave) {
                 const categoryId = pendingEvents[date];
-
                 const existingEvent = events.find((e) => {
                     const eventDate = e.start instanceof Date ? e.start : (e.start as any).toDate();
                     return format(eventDate, "yyyy-MM-dd") === date && e.userId === userId;
@@ -69,7 +70,7 @@ export function useEventModalController({
 
                 if (categoryId === "delete") {
                     if (existingEvent) {
-                        await deleteDoc(doc(db, "events", existingEvent.id));
+                        batch.delete(doc(db, "events", existingEvent.id));
                     }
                     continue;
                 }
@@ -85,16 +86,18 @@ export function useEventModalController({
                 };
 
                 if (existingEvent) {
-                    await updateDoc(doc(db, "events", existingEvent.id), eventData);
+                    batch.update(doc(db, "events", existingEvent.id), eventData);
                 } else {
-                    await addDoc(collection(db, "events"), { ...eventData, createdAt: new Date() });
+                    const newDocRef = doc(collection(db, "events"));
+                    batch.set(newDocRef, { ...eventData, createdAt: new Date() });
                 }
             }
 
+            await batch.commit();
             setPendingEvents({});
             onClose();
         } catch (error) {
-            console.error("Error saving events:", error);
+            console.error("Error saving events with batch:", error);
         } finally {
             setLoading(false);
         }

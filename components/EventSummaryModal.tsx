@@ -4,16 +4,16 @@ import React, { useState, useEffect } from "react";
 import { parseISO, format } from "date-fns";
 
 import {
-    Sun, CloudSun, Moon, SunMoon, MoonStar,
-    Coffee, Briefcase, Stethoscope, Syringe, UserRound,
-    Clock, Utensils, Car, Plane, HelpCircle
+    Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle
 } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-    Sun, CloudSun, Moon, SunMoon, MoonStar,
-    Coffee, Briefcase, Stethoscope, Syringe, UserRound,
-    Clock, Utensils, Car, Plane
+    morning: Sun,
+    afternoon: CloudSun,
+    night: Moon,
+    allday: SunMoon,
+    nightafternoon: MoonStar,
 };
 
 interface EventSummaryModalProps {
@@ -76,7 +76,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                     <div className="flex flex-col gap-3">
                         {dateEvents.length > 0 ? (
                             dateEvents.map((event, idx) => {
-                                const IconComponent = (event.icon && ICON_MAP[event.icon]) || HelpCircle;
+                                const IconComponent = (event.icon && ICON_MAP[event.icon]) || (event.category && ICON_MAP[event.category]) || HelpCircle;
                                 const eventColor = event.color || CATEGORY_COLORS[event.category] || "#334155";
                                 
                                 return (

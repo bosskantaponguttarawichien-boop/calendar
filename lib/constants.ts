@@ -1,4 +1,6 @@
-import { Sun, CloudSun, Moon, SunMoon, MoonStar, Plus } from "lucide-react";
+import {
+    Sun, CloudSun, Moon, SunMoon, MoonStar, Plus
+} from "lucide-react";
 import { Category } from "@/types/event.types";
 
 export const CATEGORY_COLORS: Record<string, string> = {
@@ -11,10 +13,10 @@ export const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export const CATEGORIES: Category[] = [
-    { id: "morning",       label: "เช้า",     icon: Sun,     color: "#86BBD8" },
-    { id: "afternoon",     label: "บ่าย",     icon: CloudSun, color: "#F58220" },
-    { id: "night",         label: "ดึก",      icon: Moon,    color: "#D43B80" },
-    { id: "allday",        label: "เช้า/บ่าย", icon: SunMoon, color: "#00AB84" },
-    { id: "nightafternoon",label: "ดึก/บ่าย", icon: MoonStar, color: "#8338EC" },
-    { id: "custom",        label: "เพิ่ม",    icon: Plus,    color: "#334155" },
+    { id: "morning", label: "เช้า", icon: Sun, color: "#86BBD8" },
+    { id: "afternoon", label: "บ่าย", icon: CloudSun, color: "#F58220" },
+    { id: "night", label: "ดึก", icon: Moon, color: "#D43B80" },
+    { id: "allday", label: "เช้า/บ่าย", icon: SunMoon, color: "#00AB84" },
+    { id: "nightafternoon", label: "ดึก/บ่าย", icon: MoonStar, color: "#8338EC" },
+    { id: "custom", label: "เพิ่ม", icon: Plus, color: "#334155" },
 ];

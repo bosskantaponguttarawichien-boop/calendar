@@ -14,19 +14,84 @@ import EventModal from "@/components/EventModal";
 import EventSummaryModal from "@/components/EventSummaryModal";
 import MonthPickerModal from "@/components/MonthPickerModal";
 import NavBar from "@/components/NavBar";
-import { CATEGORY_COLORS } from "@/lib/constants";
+import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
 import { useCalendarController } from "@/hooks/useCalendarController";
 
 const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
 const MODAL_APPROX_HEIGHT = 200;
 
-const _today = new Date();
-const FALLBACK_EVENTS = [
-    { title: "Meeting", date: format(_today, "yyyy-MM-dd") },
-    { title: "Appointment", date: format(new Date(_today.getFullYear(), _today.getMonth(), _today.getDate() + 2), "yyyy-MM-dd") },
-    { title: "Deadline", date: format(new Date(_today.getFullYear(), _today.getMonth(), _today.getDate() - 3), "yyyy-MM-dd") },
-];
+const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Date }) => {
+    const dayName = THAI_DAY_NAMES[date.getDay()];
+    const today = new Date();
+    const isTodayMonth =
+        pickerDate.getMonth() === today.getMonth() &&
+        pickerDate.getFullYear() === today.getFullYear();
+    const isTodayDay = isTodayMonth && date.getDay() === today.getDay();
+
+    return (
+        <div className="flex flex-col items-center gap-1">
+            <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
+            {isTodayDay && (
+                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
+            )}
+        </div>
+    );
+});
+
+const DayCellContent = React.memo(({ 
+    arg, 
+    events, 
+    pendingEvents, 
+    isModalOpen 
+}: { 
+    arg: any; 
+    events: any[]; 
+    pendingEvents: Record<string, string>;
+    isModalOpen: boolean;
+}) => {
+    const dateStr = format(arg.date, "yyyy-MM-dd");
+    const dayEvents = events.filter((e) => {
+        const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
+        return format(start, "yyyy-MM-dd") === dateStr;
+    });
+
+    const pendingCat = pendingEvents[dateStr];
+    const isDeleted = pendingCat === "delete";
+    const isCustom = pendingCat?.startsWith("custom:");
+    const actualCatId = isCustom ? "custom" : pendingCat;
+    
+    const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (dayEvents.length > 0 ? dayEvents[0].category : null);
+    const category = CATEGORIES.find(c => c.id === activeCatId);
+
+    const color = (pendingCat && pendingCat !== "delete") 
+        ? (CATEGORY_COLORS[actualCatId] || "#334155")
+        : (dayEvents.length > 0 ? (dayEvents[0].color || CATEGORY_COLORS[dayEvents[0].category] || "#334155") : "");
+
+    return (
+        <div 
+            className="absolute inset-0 flex flex-col items-center pt-1 pb-2 transition-colors duration-300"
+            style={{ backgroundColor: color || "transparent" }}
+        >
+            <div className="pill-date-circle shrink-0 z-10">{arg.dayNumberText}</div>
+            
+            {category && !isDeleted && (
+                <div className="flex flex-col items-center justify-center flex-grow w-full animate-in zoom-in-50 duration-300 z-10">
+                    <category.icon 
+                        size={!isModalOpen ? 16 : 14} 
+                        className={`text-white transition-all ${!isModalOpen ? "mb-0.5" : ""}`} 
+                        strokeWidth={2.5} 
+                    />
+                    {!isModalOpen && (
+                        <span className="text-[8px] font-black text-white uppercase tracking-tighter text-center leading-[1] px-0.5">
+                            {category.label}
+                        </span>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+});
 
 const HomeScreen = () => {
     const {
@@ -80,75 +145,42 @@ const HomeScreen = () => {
                             onTouchEnd={handleTouchEnd}
                         >
                             <FullCalendar
+                                key={`calendar-${isModalOpen}`}
                                 ref={calendarRef}
                                 plugins={CALENDAR_PLUGINS}
                                 initialView="dayGridMonth"
                                 headerToolbar={false}
                                 locale="th"
-                                events={events.length > 0 ? events : FALLBACK_EVENTS}
+                                events={events}
                                 dateClick={handleDateClick}
                                 eventClick={handleEventClick}
                                 height="100%"
                                 expandRows={true}
                                 fixedWeekCount={true}
                                 dayHeaderFormat={{ weekday: "short" }}
-                                dayHeaderContent={(arg) => {
-                                    const dayName = THAI_DAY_NAMES[arg.date.getDay()];
-                                    const today = new Date();
-                                    const isTodayMonth =
-                                        pickerDate.getMonth() === today.getMonth() &&
-                                        pickerDate.getFullYear() === today.getFullYear();
-                                    const isTodayDay = isTodayMonth && arg.date.getDay() === today.getDay();
-
-                                    return (
-                                        <div className="flex flex-col items-center gap-1">
-                                            <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
-                                            {isTodayDay && (
-                                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
-                                            )}
-                                        </div>
-                                    );
-                                }}
+                                 dayHeaderContent={(arg) => <DayHeader date={arg.date} pickerDate={pickerDate} />}
                                 dayCellClassNames={(arg) => {
-                                    const dateStr = format(arg.date, "yyyy-MM-dd");
-                                    return dateStr === selectedDate ? "selected-day" : "";
-                                }}
-                                dayCellContent={(arg) => {
                                     const dateStr = format(arg.date, "yyyy-MM-dd");
                                     const dayEvents = events.filter((e) => {
                                         const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
                                         return format(start, "yyyy-MM-dd") === dateStr;
                                     });
-
                                     const pendingCat = pendingEvents[dateStr];
-                                    const isDeleted = pendingCat === "delete";
-                                    const isCustom = pendingCat?.startsWith("custom:");
-                                    const actualCatId = isCustom ? "custom" : pendingCat;
-
-                                    return (
-                                        <div className="flex flex-col items-center w-full h-full relative">
-                                            <div className="fc-daygrid-day-number">{arg.dayNumberText}</div>
-                                            {!isDeleted && (
-                                                <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center px-0.5 max-h-[14px] overflow-hidden">
-                                                    {!pendingCat &&
-                                                        dayEvents.map((event, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="w-1.5 h-1.5 rounded-full z-10"
-                                                                style={{ backgroundColor: event.color || CATEGORY_COLORS[event.category] || "#334155" }}
-                                                            />
-                                                        ))}
-                                                    {pendingCat && (
-                                                        <div
-                                                            className="w-1.5 h-1.5 rounded-full z-10 opacity-50 animate-pulse"
-                                                            style={{ backgroundColor: CATEGORY_COLORS[actualCatId] || "#334155" }}
-                                                        />
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
+                                    const hasEvent = dayEvents.length > 0 || (pendingCat && pendingCat !== "delete");
+                                    
+                                    return [
+                                        dateStr === selectedDate ? "selected-day" : "",
+                                        hasEvent ? "has-event" : "is-empty"
+                                    ].filter(Boolean).join(" ");
                                 }}
+                                dayCellContent={(arg) => (
+                                    <DayCellContent 
+                                        arg={arg} 
+                                        events={events} 
+                                        pendingEvents={pendingEvents} 
+                                        isModalOpen={isModalOpen} 
+                                    />
+                                )}
                             />
                         </div>
                     </div>

@@ -2,12 +2,13 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useAddEventController } from "@/hooks/useAddEventController";
 import { CATEGORIES } from "@/lib/constants";
 
 const AVAILABLE_COLORS = [
-    "#86BBD8", "#F58220", "#D43B80", "#00AB84", "#8338EC", "#334155", "#EF4444", "#EAB308"
+    "#86BBD8", "#F58220", "#D43B80", "#00AB84", "#8338EC", "#334155", "#EF4444", "#EAB308",
+    "#FF9E2C", "#FF5F6D", "#94A3B8", "#60A5FA", "#FACC15", "#A855F7", "#F97316", "#06B6D4"
 ];
 
 function AddCustomContent() {
@@ -29,16 +30,7 @@ function AddCustomContent() {
 
     return (
         <div className="min-h-[100dvh] bg-slate-50 flex flex-col p-5 animate-in fade-in duration-500 pb-10">
-            <header className="flex items-center justify-between mb-4 px-1">
-                <button
-                    onClick={() => router.back()}
-                    className="w-9 h-9 flex items-center justify-center bg-white rounded-full shadow-sm border border-slate-100 transition-all active:scale-95"
-                >
-                    <ChevronLeft size={18} className="text-slate-600" />
-                </button>
-                <h1 className="text-base font-black text-slate-800 tracking-tight">เพิ่มเวรใหม่</h1>
-                <div className="w-9" />
-            </header>
+
 
             <main className="flex-grow flex flex-col items-center max-w-md mx-auto w-full">
                 <div className="bg-white rounded-[28px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50 w-full mb-6 relative overflow-hidden">
@@ -61,16 +53,15 @@ function AddCustomContent() {
                         {/* Icon Selection */}
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">เลือกไอคอน</label>
-                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
+                            <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar -mx-1 px-1">
                                 {AVAILABLE_ICONS.map((item) => (
                                     <button
                                         key={item.id}
                                         onClick={() => setSelectedIcon(item.id)}
-                                        className={`shrink-0 w-10 h-10 rounded-[14px] flex items-center justify-center transition-all duration-300 ${
-                                            selectedIcon === item.id
-                                            ? "bg-slate-800 text-white shadow-lg translate-y-[-1px]"
-                                            : "bg-white text-slate-400 border border-slate-100 hover:border-slate-300"
-                                        }`}
+                                        className={`shrink-0 w-10 h-10 rounded-[14px] flex items-center justify-center transition-all duration-300 ${selectedIcon === item.id
+                                                ? "bg-slate-800 text-white shadow-lg translate-y-[-1px]"
+                                                : "bg-white text-slate-400 border border-slate-100 hover:border-slate-300"
+                                            }`}
                                     >
                                         <item.icon size={18} />
                                     </button>
@@ -81,20 +72,19 @@ function AddCustomContent() {
                         {/* Color Selection */}
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">เลือกสี</label>
-                            <div className="grid grid-cols-5 md:grid-cols-8 gap-2 px-1">
+                            <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar -mx-1 px-1">
                                 {AVAILABLE_COLORS.map((color) => (
                                     <button
                                         key={color}
                                         onClick={() => setSelectedColor(color)}
-                                        className={`h-8 rounded-lg transition-all relative flex items-center justify-center ${
-                                            selectedColor === color
-                                            ? "ring-2 ring-slate-200 ring-offset-2 scale-105"
-                                            : "opacity-80 hover:opacity-100"
-                                        }`}
+                                        className={`shrink-0 w-10 h-10 rounded-[14px] transition-all relative flex items-center justify-center ${selectedColor === color
+                                                ? "ring-2 ring-slate-200 ring-offset-2 scale-105 shadow-md"
+                                                : "opacity-80 hover:opacity-100 border border-slate-100"
+                                            }`}
                                         style={{ backgroundColor: color }}
                                     >
                                         {selectedColor === color && (
-                                            <div className="w-1 h-1 bg-white rounded-full shadow-sm" />
+                                            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-sm" />
                                         )}
                                     </button>
                                 ))}
