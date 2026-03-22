@@ -29,14 +29,31 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
+        let mounted = true;
         if (isOpen) {
-            setShouldRender(true);
-            const timer = setTimeout(() => setShowModal(true), 10);
-            return () => clearTimeout(timer);
+            const timer1 = setTimeout(() => {
+                if (mounted) setShouldRender(true);
+            }, 0);
+            const timer2 = setTimeout(() => {
+                if (mounted) setShowModal(true);
+            }, 10);
+            return () => {
+                mounted = false;
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+            };
         } else {
-            setShowModal(false);
-            const timer = setTimeout(() => setShouldRender(false), 500);
-            return () => clearTimeout(timer);
+            const timer1 = setTimeout(() => {
+                if (mounted) setShowModal(false);
+            }, 0);
+            const timer2 = setTimeout(() => {
+                if (mounted) setShouldRender(false);
+            }, 500);
+            return () => {
+                mounted = false;
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+            };
         }
     }, [isOpen]);
 

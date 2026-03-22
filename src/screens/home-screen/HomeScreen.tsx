@@ -11,12 +11,12 @@ import SettingScreen from "@/screens/setting-screen/SettingScreen";
 import ResultScreen from "@/screens/result-screen/ResultScreen";
 import GroupScreen from "@/screens/group-screen/GroupScreen";
 import EventModal from "./components/EventModal";
-import EventSummaryModal from "./components/EventSummaryModal";
 import MonthPickerModal from "./components/MonthPickerModal";
 import NavBar from "./components/NavBar";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
 import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
+import EventSummaryModal from "./components/EventSummaryModal";
 
 const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
@@ -41,14 +41,14 @@ const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Da
 });
 DayHeader.displayName = "DayHeader";
 
-const DayCellContent = React.memo(({ 
-    arg, 
-    groupedEvents, 
-    pendingEvents, 
-    isModalOpen 
-}: { 
-    arg: any; 
-    groupedEvents: Record<string, any[]>; 
+const DayCellContent = React.memo(({
+    arg,
+    groupedEvents,
+    pendingEvents,
+    isModalOpen
+}: {
+    arg: any;
+    groupedEvents: Record<string, any[]>;
     pendingEvents: Record<string, string | number>;
     isModalOpen: boolean;
 }) => {
@@ -57,17 +57,17 @@ const DayCellContent = React.memo(({
 
     const pendingCat = pendingEvents[dateStr];
     const isDeleted = pendingCat === "delete";
-    
+
     // An event is custom if it's explicitly a numeric shift template OR has a custom title (from /add)
     const hasExistingEvent = dayEvents.length > 0;
-    const isCustom = (typeof pendingCat === "string" && pendingCat.startsWith("custom:")) || 
-                    (hasExistingEvent && (typeof dayEvents[0].shiftId === "number" || !!dayEvents[0].title) && !pendingCat);
-    
+    const isCustom = (typeof pendingCat === "string" && pendingCat.startsWith("custom:")) ||
+        (hasExistingEvent && (typeof dayEvents[0].shiftId === "number" || !!dayEvents[0].title) && !pendingCat);
+
     const actualCatId = isCustom ? "custom" : pendingCat;
-    
+
     const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (hasExistingEvent ? dayEvents[0].shiftId : null);
     const category = CATEGORIES.find(c => c.id === activeCatId);
-    
+
     // Virtual category for any shift that isn't in the standard list (numeric or one-off)
     const customCategory = (hasExistingEvent && !category) ? {
         icon: CATEGORIES.find(c => c.id === dayEvents[0].icon)?.icon || CATEGORIES[0].icon,
@@ -76,25 +76,25 @@ const DayCellContent = React.memo(({
 
     const displayCategory = category || customCategory;
 
-    const color = isDeleted 
-        ? "" 
+    const color = isDeleted
+        ? ""
         : (pendingCat && pendingCat !== "delete")
             ? (CATEGORY_COLORS[actualCatId] || "#334155")
             : (hasExistingEvent ? (dayEvents[0].color || (dayEvents[0].shiftId ? CATEGORY_COLORS[dayEvents[0].shiftId as string] : null) || "#334155") : "");
 
     return (
-        <div 
+        <div
             className="absolute inset-0 flex flex-col items-center pt-1 pb-2 transition-colors duration-300"
             style={{ backgroundColor: color || "transparent" }}
         >
             <div className="pill-date-circle shrink-0 z-10">{arg.dayNumberText}</div>
-            
+
             {displayCategory && !isDeleted && (
                 <div className="flex flex-col items-center justify-center flex-grow w-full animate-in zoom-in-50 duration-300 z-10">
-                    <displayCategory.icon 
-                        size={!isModalOpen ? 16 : 14} 
-                        className={`text-white transition-all ${!isModalOpen ? "mb-0.5" : ""}`} 
-                        strokeWidth={2.5} 
+                    <displayCategory.icon
+                        size={!isModalOpen ? 16 : 14}
+                        className={`text-white transition-all ${!isModalOpen ? "mb-0.5" : ""}`}
+                        strokeWidth={2.5}
                     />
                     {!isModalOpen && (
                         <span className="text-[8px] font-black text-white uppercase tracking-tighter text-center leading-[1] px-0.5">
@@ -185,26 +185,26 @@ const HomeScreen = () => {
                                 expandRows={true}
                                 fixedWeekCount={true}
                                 dayHeaderFormat={{ weekday: "short" }}
-                                 dayHeaderContent={(arg) => <DayHeader date={arg.date} pickerDate={pickerDate} />}
-                                 datesSet={updateTitle}
-                                 dayCellClassNames={(arg) => {
+                                dayHeaderContent={(arg) => <DayHeader date={arg.date} pickerDate={pickerDate} />}
+                                datesSet={updateTitle}
+                                dayCellClassNames={(arg) => {
                                     const dateStr = format(arg.date, "yyyy-MM-dd");
                                     const dayEvents = groupedEvents[dateStr] || [];
                                     const pendingCat = pendingEvents[dateStr];
                                     const isDeleted = pendingCat === "delete";
                                     const hasEvent = !isDeleted && (dayEvents.length > 0 || (pendingCat && pendingCat !== "delete"));
-                                    
+
                                     return [
                                         dateStr === selectedDate ? "selected-day" : "",
                                         hasEvent ? "has-event" : "is-empty"
                                     ].filter(Boolean).join(" ");
                                 }}
                                 dayCellContent={(arg) => (
-                                    <DayCellContent 
-                                        arg={arg} 
-                                        groupedEvents={groupedEvents} 
-                                        pendingEvents={pendingEvents} 
-                                        isModalOpen={isModalOpen} 
+                                    <DayCellContent
+                                        arg={arg}
+                                        groupedEvents={groupedEvents}
+                                        pendingEvents={pendingEvents}
+                                        isModalOpen={isModalOpen}
                                     />
                                 )}
                             />
@@ -233,8 +233,8 @@ const HomeScreen = () => {
                         <button
                             onClick={() => {
                                 const today = new Date();
-                                const isSameMonth = pickerDate.getMonth() === today.getMonth() && 
-                                                   pickerDate.getFullYear() === today.getFullYear();
+                                const isSameMonth = pickerDate.getMonth() === today.getMonth() &&
+                                    pickerDate.getFullYear() === today.getFullYear();
                                 const defaultDate = isSameMonth ? today : pickerDate;
                                 setSelectedDate(format(defaultDate, "yyyy-MM-dd"));
                                 setIsSummaryModalOpen(false);
