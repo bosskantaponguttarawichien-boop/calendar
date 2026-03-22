@@ -3,12 +3,15 @@
 import React from "react";
 import { Palette, ChevronRight, LogOut, User, ClipboardList, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { useRouter } from "next/navigation";
 
-const settingItems = [
+type SettingItem = { icon: React.ElementType; label: string; desc: string; href?: string };
+
+const settingItems: { group: string; items: SettingItem[] }[] = [
   {
     group: "ทั่วไป",
     items: [
-      { icon: ClipboardList, label: "รายการเวร", desc: "จัดการและดูรายการเวรทั้งหมด" },
+      { icon: ClipboardList, label: "รายการเวร", desc: "จัดการและดูรายการเวรทั้งหมด", href: "/duties" },
     ],
   },
   {
@@ -22,6 +25,7 @@ const settingItems = [
 
 export default function SettingScreen({ user }: { user?: any }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const router = useRouter();
 
   return (
     <div className="flex-grow overflow-y-auto px-1 pb-2">
@@ -70,7 +74,7 @@ export default function SettingScreen({ user }: { user?: any }) {
                   </div>
                   {isDarkModeToggle ? (
                     <div 
-                      className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center ${isDarkMode ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-600'}`}
+                      className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center ${isDarkMode ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'}`}
                     >
                       <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
                     </div>
@@ -97,6 +101,11 @@ export default function SettingScreen({ user }: { user?: any }) {
               return (
                 <button
                   key={item.label}
+                  onClick={() => {
+                    if (item.href) {
+                      router.push(item.href);
+                    }
+                  }}
                   className={`w-full flex items-center gap-4 px-5 py-4 active:bg-slate-50 dark:active:bg-slate-700 transition-colors ${
                     i < group.items.length - 1 ? "border-b border-slate-100 dark:border-slate-700" : ""
                   }`}

@@ -21,6 +21,8 @@ export const CATEGORIES: Category[] = [
     { id: "custom", label: "เพิ่ม", icon: Plus, color: "#334155" },
 ];
 
+export const DEFAULT_SHIFT_IDS = CATEGORIES.filter((c) => c.id !== "custom").map((c) => c.id);
+
 export const THAI_MONTHS = [
     "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
     "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"

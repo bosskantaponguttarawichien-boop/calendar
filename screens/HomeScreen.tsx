@@ -43,20 +43,17 @@ DayHeader.displayName = "DayHeader";
 
 const DayCellContent = React.memo(({ 
     arg, 
-    events, 
+    groupedEvents, 
     pendingEvents, 
     isModalOpen 
 }: { 
     arg: any; 
-    events: any[]; 
+    groupedEvents: Record<string, any[]>; 
     pendingEvents: Record<string, string | number>;
     isModalOpen: boolean;
 }) => {
     const dateStr = format(arg.date, "yyyy-MM-dd");
-    const dayEvents = events.filter((e) => {
-        const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
-        return format(start, "yyyy-MM-dd") === dateStr;
-    });
+    const dayEvents = groupedEvents[dateStr] || [];
 
     const pendingCat = pendingEvents[dateStr];
     const isDeleted = pendingCat === "delete";
@@ -112,6 +109,7 @@ const HomeScreen = () => {
         calendarRef,
         calendarWrapperRef,
         events,
+        groupedEvents,
         isModalOpen,
         setIsModalOpen,
         isSummaryModalOpen,
@@ -186,10 +184,7 @@ const HomeScreen = () => {
                                  datesSet={updateTitle}
                                  dayCellClassNames={(arg) => {
                                     const dateStr = format(arg.date, "yyyy-MM-dd");
-                                    const dayEvents = events.filter((e) => {
-                                        const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
-                                        return format(start, "yyyy-MM-dd") === dateStr;
-                                    });
+                                    const dayEvents = groupedEvents[dateStr] || [];
                                     const pendingCat = pendingEvents[dateStr];
                                     const isDeleted = pendingCat === "delete";
                                     const hasEvent = !isDeleted && (dayEvents.length > 0 || (pendingCat && pendingCat !== "delete"));
@@ -202,7 +197,7 @@ const HomeScreen = () => {
                                 dayCellContent={(arg) => (
                                     <DayCellContent 
                                         arg={arg} 
-                                        events={events} 
+                                        groupedEvents={groupedEvents} 
                                         pendingEvents={pendingEvents} 
                                         isModalOpen={isModalOpen} 
                                     />

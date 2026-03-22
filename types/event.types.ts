@@ -14,6 +14,8 @@ export interface EventData {
     createdAt?: Date;
     updatedAt?: Date;
     collectionName?: "events" | "shifts";
+    isTemplateOverride?: boolean;
+    isDeleted?: boolean;
 }
 
 export interface Category {

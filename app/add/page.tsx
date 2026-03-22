@@ -17,16 +17,35 @@ function AddCustomContent() {
     const { userId, loading: liffLoading } = useLiff();
     const searchParams = useSearchParams();
     const dateStr = searchParams.get("date");
+    const editId = searchParams.get("editId");
+    
+    const initialTitle = searchParams.get("title");
+    const initialIcon = searchParams.get("icon");
+    const initialColor = searchParams.get("color");
+    const initialStartTime = searchParams.get("startTime");
+    const initialEndTime = searchParams.get("endTime");
 
     const {
         title, setTitle,
         selectedIcon, setSelectedIcon,
         selectedColor, setSelectedColor,
+        isTimeEnabled, setIsTimeEnabled,
         startTime, setStartTime,
         endTime, setEndTime,
         loading,
         handleSave,
-    } = useAddEventController({ dateStr, userId: userId || "local-user" });
+    } = useAddEventController({ 
+        dateStr, userId: userId || "local-user", 
+        editId, initialTitle, initialIcon, initialColor, initialStartTime, initialEndTime 
+    });
+
+    const handleToggleTime = (enabled: boolean) => {
+        setIsTimeEnabled(enabled);
+        if (!enabled) {
+            setStartTime("");
+            setEndTime("");
+        }
+    };
 
     if (liffLoading) {
         return (
@@ -102,32 +121,48 @@ function AddCustomContent() {
                         </div>
 
                         {/* Time Range */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">ช่วงเวลา (ระบุหรือไม่ก็ได้)</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter ml-1">เริ่ม</span>
-                                    <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-200 dark:focus-within:ring-slate-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-inner">
-                                        <input
-                                            type="time"
-                                            value={startTime}
-                                            onChange={(e) => setStartTime(e.target.value)}
-                                            className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none color-scheme-dark"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter ml-1">สิ้นสุด</span>
-                                    <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-200 dark:focus-within:ring-slate-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-inner">
-                                        <input
-                                            type="time"
-                                            value={endTime}
-                                            onChange={(e) => setEndTime(e.target.value)}
-                                            className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none color-scheme-dark"
-                                        />
-                                    </div>
-                                </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between ml-1">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest cursor-pointer" onClick={() => handleToggleTime(!isTimeEnabled)}>
+                                    ช่วงเวลา (ระบุหรือไม่ก็ได้)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => handleToggleTime(!isTimeEnabled)}
+                                    className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center shrink-0 cursor-pointer focus:outline-none ${isTimeEnabled ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-600"}`}
+                                >
+                                    <span
+                                        className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${isTimeEnabled ? 'translate-x-4' : 'translate-x-0'}`}
+                                    />
+                                </button>
                             </div>
+
+                            {isTimeEnabled && (
+                                <div className="grid grid-cols-2 gap-2 animate-in slide-in-from-top-2 fade-in zoom-in-95 duration-200">
+                                    <div className="space-y-1">
+                                        <span className="text-[9px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter ml-1">เริ่ม</span>
+                                        <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-200 dark:focus-within:ring-slate-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-inner">
+                                            <input
+                                                type="time"
+                                                value={startTime}
+                                                onChange={(e) => setStartTime(e.target.value)}
+                                                className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none color-scheme-dark"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[9px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter ml-1">สิ้นสุด</span>
+                                        <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-200 dark:focus-within:ring-slate-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-inner">
+                                            <input
+                                                type="time"
+                                                value={endTime}
+                                                onChange={(e) => setEndTime(e.target.value)}
+                                                className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none color-scheme-dark"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -135,20 +170,20 @@ function AddCustomContent() {
                 <div className="w-full flex gap-3 mt-4">
                     <button
                         onClick={() => router.back()}
-                        className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-300 py-3 rounded-[18px] font-black text-[15px] hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all outline-none"
+                        className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-300 py-2.5 rounded-2xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all outline-none"
                     >
                         ยกเลิก
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={loading || !title.trim()}
-                        className="flex-[2] bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 py-3 rounded-[18px] font-black text-[15px] shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:dark:opacity-50 flex items-center justify-center gap-2 outline-none group"
+                        className="flex-[2] bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:dark:opacity-50 flex items-center justify-center gap-2 outline-none group"
                     >
                         {loading ? (
                             <div className="w-4 h-4 border-2 border-white/30 dark:border-slate-800/30 border-t-white dark:border-t-slate-800 rounded-full animate-spin" />
                         ) : (
                             <>
-                                <Save size={16} className="group-hover:scale-110 transition-transform" />
+                                <Save size={14} className="group-hover:scale-110 transition-transform" />
                                 บันทึกเวร
                             </>
                         )}

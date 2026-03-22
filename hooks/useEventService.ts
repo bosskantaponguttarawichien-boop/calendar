@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 import { format, parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, DEFAULT_SHIFT_IDS } from "@/lib/constants";
 
 export function useEventService() {
     const upsertByDate = useCallback(async (collectionName: "events" | "shifts", userId: string, dateStr: string, data: any) => {
@@ -172,10 +172,150 @@ export function useEventService() {
         await batch.commit();
     }, []);
 
+    const deleteCustomShiftGlobal = useCallback(async (userId: string, template: any) => {
+        try {
+            const qShifts = query(collection(db, "shifts"), where("userId", "==", userId));
+            const qEvents = query(collection(db, "events"), where("userId", "==", userId));
+            const [snapshotShifts, snapshotEvents] = await Promise.all([getDocs(qShifts), getDocs(qEvents)]);
+
+            const batch = writeBatch(db);
+            const isDefault = DEFAULT_SHIFT_IDS.includes(template.shiftId || template.id);
+
+            snapshotShifts.docs.forEach((docSnap) => {
+                const data = docSnap.data();
+                const match = template.shiftId 
+                    ? data.shiftId === template.shiftId 
+                    : (data.title === template.title && data.icon === template.icon && data.color === template.color);
+                
+                if (match && !data.isTemplateOverride) {
+                    batch.delete(docSnap.ref);
+                }
+            });
+
+            snapshotEvents.docs.forEach((docSnap) => {
+                const data = docSnap.data();
+                const match = (data.shiftId === template.shiftId || data.category === template.shiftId);
+                if (match) {
+                    batch.delete(docSnap.ref);
+                }
+            });
+
+            if (isDefault) {
+                const overrideDoc = snapshotShifts.docs.find(d => {
+                    const data = d.data();
+                    return data.isTemplateOverride && data.shiftId === (template.shiftId || template.id);
+                });
+                if (overrideDoc) {
+                    batch.update(overrideDoc.ref, { isDeleted: true, updatedAt: new Date() });
+                } else {
+                    const newRef = doc(collection(db, "shifts"));
+                    batch.set(newRef, {
+                        userId,
+                        shiftId: template.shiftId || template.id,
+                        isTemplateOverride: true,
+                        isDeleted: true,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+            await batch.commit();
+        } catch (error) {
+            console.error("Error deleting custom shift global:", error);
+            throw error;
+        }
+    }, []);
+
+    const updateCustomShiftGlobal = useCallback(async (userId: string, template: any, newShiftData: any) => {
+        try {
+            const qShifts = query(collection(db, "shifts"), where("userId", "==", userId));
+            const qEvents = query(collection(db, "events"), where("userId", "==", userId));
+            const [snapshotShifts, snapshotEvents] = await Promise.all([getDocs(qShifts), getDocs(qEvents)]);
+
+            const batch = writeBatch(db);
+            const isDefault = DEFAULT_SHIFT_IDS.includes(template.shiftId || template.id);
+            const shiftIdToMatch = template.shiftId || template.id;
+
+            snapshotShifts.docs.forEach((docSnap) => {
+                const data = docSnap.data();
+                const match = template.shiftId 
+                    ? data.shiftId === template.shiftId 
+                    : (data.title === template.title && data.icon === template.icon && data.color === template.color);
+
+                if (match && !data.isTemplateOverride) {
+                    batch.update(docSnap.ref, {
+                        ...newShiftData,
+                        shiftId: shiftIdToMatch,
+                        updatedAt: new Date()
+                    });
+                }
+            });
+
+            snapshotEvents.docs.forEach((docSnap) => {
+                const data = docSnap.data();
+                const match = data.category === shiftIdToMatch || data.shiftId === shiftIdToMatch;
+                if (match) {
+                    batch.update(docSnap.ref, {
+                        ...newShiftData,
+                        category: shiftIdToMatch,
+                        shiftId: shiftIdToMatch,
+                        updatedAt: new Date()
+                    });
+                }
+            });
+
+            if (isDefault) {
+                const overrideDoc = snapshotShifts.docs.find(d => {
+                    const data = d.data();
+                    return data.isTemplateOverride && data.shiftId === shiftIdToMatch;
+                });
+                if (overrideDoc) {
+                    batch.update(overrideDoc.ref, {
+                        ...newShiftData,
+                        isDeleted: false,
+                        updatedAt: new Date()
+                    });
+                } else {
+                    const newRef = doc(collection(db, "shifts"));
+                    batch.set(newRef, {
+                        ...newShiftData,
+                        userId,
+                        shiftId: shiftIdToMatch,
+                        isTemplateOverride: true,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+
+            await batch.commit();
+        } catch (error) {
+            console.error("Error updating custom shift global:", error);
+            throw error;
+        }
+    }, []);
+
     return { 
         subscribeToEvents, 
         addOrUpdateEventByDate, 
         addOrUpdateShiftByDate,
-        saveBatchEvents 
+        saveBatchEvents,
+        deleteCustomShiftGlobal,
+        updateCustomShiftGlobal,
+        createCustomShiftTemplate: useCallback(async (userId: string, data: any) => {
+            try {
+                const docRef = await addDoc(collection(db, "shifts"), {
+                    ...data,
+                    userId,
+                    isTemplateOverride: false,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                return { id: docRef.id };
+            } catch (error) {
+                console.error("Error creating shift template:", error);
+                throw error;
+            }
+        }, [])
     };
 }

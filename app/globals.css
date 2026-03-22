@@ -135,7 +135,7 @@ html {
   scrollbar-width: none !important;
 }
 
-/* --- FullCalendar Pill-Style Overrides --- */
+/* --- FullCalendar Pill-Style Overrides & Nuclear Border Reset --- */
 
 .fc {
   --fc-border-color: transparent;
@@ -143,27 +143,72 @@ html {
   background-color: transparent !important;
 }
 
-
-/* Remove all borders */
+/* Aggressively hide all structural borders, dividers, and shadows */
+.fc-theme-standard .fc-scrollgrid,
 .fc-theme-standard td,
 .fc-theme-standard th,
-.fc-theme-standard .fc-scrollgrid {
-  border: none !important;
+.fc-scrollgrid-divider,
+.fc-scrollgrid-section,
+.fc-scrollgrid-section table,
+.fc-scrollgrid-section-header,
+.fc-scrollgrid-section-body,
+.fc-scrollgrid-section-footer,
+.fc-scrollgrid-section-header table,
+.fc-scrollgrid-section-body table,
+.fc-scrollgrid-section-footer table,
+.fc-scrollgrid-section-header td,
+.fc-scrollgrid-section-header th,
+.fc-scrollgrid-section-body td,
+.fc-scrollgrid-section-body th,
+.fc-col-header,
+.fc-col-header-cell,
+.fc-col-header-cell-cushion {
+  border: 0 !important;
+  border-width: 0 !important;
+  border-style: hidden !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
   background-color: transparent !important;
 }
 
-/* Day headers (Sun, Mon, etc.) */
-.fc .fc-col-header-cell,
-.fc .fc-col-header,
-.fc .fc-scrollgrid-section-header,
-.fc .fc-scrollgrid-section-header>th,
-.fc .fc-scrollgrid-section-header>td {
-  background-color: transparent !important;
+.fc .fc-daygrid-day,
+.fc .fc-daygrid-day-frame,
+.fc .fc-daygrid-day-top {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Specifically target sticky headers that often inject shadows/borders */
+.fc .fc-scrollgrid-section-sticky > * {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Force table layout to prevent sub-pixel gaps */
+.fc table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+}
+
+/* Hide all variants of dividers and separators */
+.fc-scrollgrid-divider,
+.fc-scrollgrid-section-header-divider,
+.fc-scrollgrid-section-body-divider,
+.fc-scrollgrid-section-footer-divider {
+  display: none !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Day headers (Sun, Mon, etc.) settings */
+.fc .fc-col-header-cell {
   padding-bottom: 8px;
   font-weight: 500;
   color: #64748b;
   font-size: 0.875rem;
-  border: none !important;
 }
 
 .dark .fc .fc-col-header-cell,

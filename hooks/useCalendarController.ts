@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { useEventService } from "@/hooks/useEventService";
 import { format, setMonth, setYear } from "date-fns";
@@ -176,12 +176,29 @@ export function useCalendarController(userId: string | null) {
         }
     }, [updateTitle]);
 
+    // Group events by date for O(1) lookup in calendar cells
+    const groupedEvents = useMemo(() => {
+        const groups: Record<string, EventData[]> = {};
+        events.forEach((event) => {
+            try {
+                const date = event.start instanceof Date ? event.start : (event.start as any).toDate();
+                const key = format(date, "yyyy-MM-dd");
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(event);
+            } catch {
+                console.warn("[CalendarController] Skipped event with invalid date:", event);
+            }
+        });
+        return groups;
+    }, [events]);
+
     return {
         // Refs
         calendarRef,
         calendarWrapperRef,
         // State
         events,
+        groupedEvents,
         isModalOpen,
         setIsModalOpen,
         isSummaryModalOpen,
