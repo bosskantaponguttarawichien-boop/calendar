@@ -2,7 +2,7 @@
 
 import { TrendingUp, Calendar, CheckCircle2, Clock, ChevronRight } from "lucide-react";
 
-export default function ResultPage() {
+export default function ResultScreen() {
   const stats = [
     { label: "กิจกรรมทั้งหมด", value: "12", icon: Calendar, color: "text-blue-500", bg: "bg-blue-50" },
     { label: "เสร็จสิ้นแล้ว", value: "8", icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50" },
@@ -23,7 +23,7 @@ export default function ResultPage() {
           <TrendingUp size={20} className="text-slate-800" />
           <h2 className="font-bold text-slate-800">สรุปภาพรวมเดือนนี้</h2>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-3">
           {stats.map((stat) => (
             <div key={stat.label} className={`${stat.bg} rounded-2xl p-3 flex flex-col items-center text-center shadow-sm border border-white/40`}>

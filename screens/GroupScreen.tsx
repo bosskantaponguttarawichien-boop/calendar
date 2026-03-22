@@ -3,7 +3,7 @@
 import React from "react";
 import { Users, UserPlus, Search, ChevronRight, MessageSquare, Plus } from "lucide-react";
 
-export default function GroupPage() {
+export default function GroupScreen() {
   const groups = [
     { name: "ครอบครัว", members: 4, lastMsg: "วันนี้กินข้าวที่ไหนดี?", time: "10:20", id: "1" },
     { name: "แก๊งค์เพื่อนมัธยม", members: 12, lastMsg: "ทริปหน้าไปไหนกันดี", time: "เมื่อวาน", id: "2" },

@@ -3,6 +3,19 @@
 import React, { useState, useEffect } from "react";
 import { parseISO, format } from "date-fns";
 
+import {
+    Sun, CloudSun, Moon, SunMoon, MoonStar,
+    Coffee, Briefcase, Stethoscope, Syringe, UserRound,
+    Clock, Utensils, Car, Plane, HelpCircle
+} from "lucide-react";
+import { CATEGORY_COLORS } from "@/lib/constants";
+
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+    Sun, CloudSun, Moon, SunMoon, MoonStar,
+    Coffee, Briefcase, Stethoscope, Syringe, UserRound,
+    Clock, Utensils, Car, Plane
+};
+
 interface EventSummaryModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,14 +24,6 @@ interface EventSummaryModalProps {
     onEdit: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-    morning: "#86BBD8",
-    afternoon: "#F58220",
-    night: "#D43B80",
-    allday: "#00AB84",
-    custom: "#334155",
-};
-
 const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: EventSummaryModalProps) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [showModal, setShowModal] = useState(false);
@@ -26,23 +31,14 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
+            const timer = setTimeout(() => setShowModal(true), 10);
+            return () => clearTimeout(timer);
         } else {
             setShowModal(false);
-            const timer = setTimeout(() => {
-                setShouldRender(false);
-            }, 500);
+            const timer = setTimeout(() => setShouldRender(false), 500);
             return () => clearTimeout(timer);
         }
     }, [isOpen]);
-
-    useEffect(() => {
-        if (shouldRender && isOpen) {
-            const timer = setTimeout(() => {
-                setShowModal(true);
-            }, 10);
-            return () => clearTimeout(timer);
-        }
-    }, [shouldRender, isOpen]);
 
     if (!shouldRender) return null;
 
@@ -64,45 +60,71 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
         <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
             {/* Backdrop */}
             <div 
-                className={`absolute inset-0 bg-white/5 backdrop-blur-[2px] transition-opacity duration-500 pointer-events-auto ${showModal ? "opacity-100" : "opacity-0"}`}
+                className={`absolute inset-0 bg-black/10 backdrop-blur-[4px] transition-opacity duration-500 pointer-events-auto ${showModal ? "opacity-100" : "opacity-0"}`}
                 onClick={onClose}
             />
 
             {/* Modal Sheet */}
-            <div className={`bg-white w-full max-w-lg rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 pt-5 pb-6 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
-                <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center">
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-slate-400 font-bold text-xs uppercase tracking-wider">
-                                {getThaiDate()}
-                            </span>
-                            {dateEvents.length > 0 ? (
-                                dateEvents.map((event, idx) => (
-                                    <div key={event.id || idx} className="flex items-center gap-2">
-                                        <div 
-                                            className="w-2.5 h-2.5 rounded-full" 
-                                            style={{ backgroundColor: CATEGORY_COLORS[event.category] || "#334155" }}
-                                        />
-                                        <span className="text-lg font-black text-[#1e293b]">
-                                            {event.title}
-                                        </span>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                                    <span className="text-lg font-black text-slate-300">ไม่มีกิจกรรม</span>
-                                </div>
-                            )}
-                        </div>
+            <div className={`bg-white w-full max-w-lg rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 pt-5 pb-8 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-0.5 px-2">
+                        <span className="text-slate-400 font-bold text-xs uppercase tracking-wider">
+                            {getThaiDate()}
+                        </span>
+                    </div>
 
+                    <div className="flex flex-col gap-3">
+                        {dateEvents.length > 0 ? (
+                            dateEvents.map((event, idx) => {
+                                const IconComponent = (event.icon && ICON_MAP[event.icon]) || HelpCircle;
+                                const eventColor = event.color || CATEGORY_COLORS[event.category] || "#334155";
+                                
+                                return (
+                                    <div key={event.id || idx} className="flex items-center justify-between bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                                        <div className="flex items-center gap-4">
+                                            <div 
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm" 
+                                                style={{ backgroundColor: eventColor }}
+                                            >
+                                                <IconComponent size={24} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-lg font-bold text-slate-800 leading-tight">
+                                                    {event.title}
+                                                </span>
+                                                {(event.startTime || event.endTime) && (
+                                                    <span className="text-sm font-medium text-slate-400 mt-0.5">
+                                                        {event.startTime || "??"} - {event.endTime || "??"}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={onEdit}
+                                            className="bg-white text-slate-400 p-2 rounded-xl shadow-sm border border-slate-100 hover:text-slate-600 transition-all active:scale-95"
+                                        >
+                                            <span className="text-xs font-bold px-2">แก้ไข</span>
+                                        </button>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-slate-300 gap-2">
+                                <HelpCircle size={40} strokeWidth={1.5} />
+                                <span className="text-sm font-bold">ไม่มีกิจกรรม</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {dateEvents.length === 0 && (
                         <button
                             onClick={onEdit}
-                            className="bg-[#f8fafc] text-slate-800 px-5 py-2 rounded-[20px] font-bold text-base shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+                            className="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:bg-slate-700 transition-all active:scale-95 mt-2"
                         >
-                            แก้ไข
+                            เพิ่มกิจกรรม
                         </button>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
