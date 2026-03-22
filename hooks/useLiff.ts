@@ -6,8 +6,8 @@ import liff from "@/lib/liff";
 const LIFF_ID = "2009451557-lZpkB3ag"; // Keep local if not exported, or import
 
 export function useLiff() {
-    const [userId, setUserId] = useState<string | null>("default-user");
-    const [displayName, setDisplayName] = useState<string | null>("default-user");
+    const [userId, setUserId] = useState<string | null>(null);
+    const [displayName, setDisplayName] = useState<string | null>(null);
     const [pictureUrl, setPictureUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export function useLiff() {
                     setDisplayName(profile.displayName);
                     setPictureUrl(profile.pictureUrl || null);
                 } else {
-                    // liff.login();
+                    liff.login();
                 }
             } catch (error) {
                 console.error("LIFF Initialization failed", error);

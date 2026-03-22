@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEventService } from "@/hooks/useEventService";
 import { format, parseISO, addDays } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -31,11 +31,28 @@ export function useEventModalController({
     const [loading, setLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | number | null>(null);
 
+    // Synchronize selection with the current state of the date
+    useEffect(() => {
+        if (!selectedDate) {
+            setSelectedCategory(null);
+            return;
+        }
+        const pending = pendingEvents[selectedDate];
+        if (pending) {
+            setSelectedCategory(pending === "delete" ? null : pending);
+        } else {
+            const existing = events.find((e) => {
+                const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
+                return format(d, "yyyy-MM-dd") === selectedDate;
+            });
+            setSelectedCategory(existing?.shiftId || null);
+        }
+    }, [selectedDate, pendingEvents, events]);
+
     const advanceToNextDay = () => {
         if (!selectedDate) return;
         const nextDate = addDays(parseISO(selectedDate), 1);
         setSelectedDate(format(nextDate, "yyyy-MM-dd"));
-        setSelectedCategory(null);
     };
 
     const handleIconClick = (categoryId: string | number) => {
@@ -80,7 +97,6 @@ export function useEventModalController({
         setPendingEvents((prev) => ({ ...prev, [selectedDate]: "delete" }));
         const prevDate = addDays(parseISO(selectedDate), -1);
         setSelectedDate(format(prevDate, "yyyy-MM-dd"));
-        setSelectedCategory(null);
     };
 
     const handleCancel = () => {

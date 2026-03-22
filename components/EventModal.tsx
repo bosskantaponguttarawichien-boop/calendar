@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle } from "lucide-react";
 import { parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
 import { CATEGORIES } from "@/lib/constants";
@@ -18,6 +18,19 @@ interface EventModalProps {
     setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
 }
 
+const ICON_MAP: Record<string, any> = {
+    morning: Sun,
+    afternoon: CloudSun,
+    night: Moon,
+    allday: SunMoon,
+    nightafternoon: MoonStar,
+    Sun: Sun,
+    CloudSun: CloudSun,
+    Moon: Moon,
+    SunMoon: SunMoon,
+    MoonStar: MoonStar,
+};
+
 const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, events, pendingEvents, setPendingEvents }: EventModalProps) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [showModal, setShowModal] = useState(false);
@@ -32,13 +45,12 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
         handleIconClick,
     } = useEventModalController({ selectedDate, userId, events, pendingEvents, setPendingEvents, setSelectedDate, onClose });
 
-    // Extract unique custom shifts (numeric IDs or custom string IDs)
+    // Extract unique custom shifts (templates or one-offs)
     const customShifts = useMemo(() => {
-        return events
+        const unique = events
             .filter(e => {
-                const isNumericId = typeof e.shiftId === "number";
-                const isManualCustom = typeof e.shiftId === "string" && !isNaN(Number(e.shiftId));
-                return isNumericId || isManualCustom;
+                // Return true if it's NOT a standard category ID
+                return !["morning", "afternoon", "night", "allday", "nightafternoon", "custom"].includes(e.shiftId as string);
             })
             .reduce((acc, curr) => {
                 const key = `${curr.title}-${curr.icon}-${curr.color}`;
@@ -47,6 +59,8 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
                 }
                 return acc;
             }, [] as EventData[]);
+            
+        return unique;
     }, [events]);
 
     const ALL_ITEMS = useMemo(() => {
@@ -58,7 +72,7 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
             ...customShifts.map(s => ({
                 id: s.shiftId,
                 label: s.title || "เวรพิเศษ",
-                icon: CATEGORIES.find(c => c.id === s.icon)?.icon || CATEGORIES[0].icon,
+                icon: (s.icon && ICON_MAP[s.icon]) || (typeof s.shiftId === 'string' && ICON_MAP[s.shiftId]) || HelpCircle,
                 color: s.color || "#334155"
             })),
             ...(plusCat ? [{ id: plusCat.id, label: plusCat.label, icon: plusCat.icon, color: plusCat.color }] : [])
@@ -112,7 +126,7 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
                         <X size={20} strokeWidth={3} />
                     </button>
 
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-3">
+                    <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">
                         {getThaiHeader()}
                     </h2>
 
@@ -135,7 +149,9 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
                                     <button
                                         onClick={() => handleIconClick(cat.id)}
                                         className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg active:scale-95
-                                            ${selectedCategory === cat.id ? "scale-110 ring-4 ring-slate-100 dark:ring-slate-700" : "scale-100 hover:scale-105"}`}
+                                            ${selectedCategory === cat.id 
+                                                ? "scale-110 ring-4 ring-slate-400/30 dark:ring-slate-500/50 shadow-[0_0_20px_rgba(0,0,0,0.2)]" 
+                                                : "scale-100 hover:scale-105"}`}
                                         style={{ backgroundColor: typeof cat.color === 'string' ? cat.color : undefined }}
                                     >
                                         <cat.icon size={22} className="text-white" strokeWidth={2.5} />

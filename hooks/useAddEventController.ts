@@ -49,18 +49,21 @@ export function useAddEventController({
             if (editId) {
                 await updateCustomShiftGlobal(userId, { shiftId: editId }, eventData);
                 router.back();
-            } else if (dateStr) {
-                const date = parseISO(dateStr);
-                eventData.start = date;
-                eventData.end = date;
-                await addOrUpdateShiftByDate(userId, dateStr, eventData);
-
-                const nextDate = addDays(date, 1);
-                router.push(`/?date=${format(nextDate, "yyyy-MM-dd")}&open=true`);
             } else {
-                // Standalone template creation
+                // Always create a template for new custom events
                 await createCustomShiftTemplate(userId, eventData);
-                router.back();
+                
+                if (dateStr) {
+                    const date = parseISO(dateStr);
+                    eventData.start = date;
+                    eventData.end = date;
+                    await addOrUpdateShiftByDate(userId, dateStr, eventData);
+                    
+                    // Return to the same date with modal open to see the new template icon
+                    router.push(`/?date=${dateStr}&open=true`);
+                } else {
+                    router.back();
+                }
             }
         } catch (error) {
             console.error(error);

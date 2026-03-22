@@ -57,14 +57,19 @@ const DayCellContent = React.memo(({
 
     const pendingCat = pendingEvents[dateStr];
     const isDeleted = pendingCat === "delete";
-    const isCustom = (typeof pendingCat === "string" && pendingCat.startsWith("custom:")) || (dayEvents.length > 0 && typeof dayEvents[0].shiftId === "number" && !pendingCat);
+    
+    // An event is custom if it's explicitly a numeric shift template OR has a custom title (from /add)
+    const hasExistingEvent = dayEvents.length > 0;
+    const isCustom = (typeof pendingCat === "string" && pendingCat.startsWith("custom:")) || 
+                    (hasExistingEvent && (typeof dayEvents[0].shiftId === "number" || !!dayEvents[0].title) && !pendingCat);
+    
     const actualCatId = isCustom ? "custom" : pendingCat;
     
-    const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (dayEvents.length > 0 ? dayEvents[0].shiftId : null);
+    const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (hasExistingEvent ? dayEvents[0].shiftId : null);
     const category = CATEGORIES.find(c => c.id === activeCatId);
     
-    // Virtual category for custom numeric shifts
-    const customCategory = (typeof activeCatId === "number" && dayEvents.length > 0) ? {
+    // Virtual category for any shift that isn't in the standard list (numeric or one-off)
+    const customCategory = (hasExistingEvent && !category) ? {
         icon: CATEGORIES.find(c => c.id === dayEvents[0].icon)?.icon || CATEGORIES[0].icon,
         label: dayEvents[0].title
     } : null;
@@ -75,7 +80,7 @@ const DayCellContent = React.memo(({
         ? "" 
         : (pendingCat && pendingCat !== "delete")
             ? (CATEGORY_COLORS[actualCatId] || "#334155")
-            : (dayEvents.length > 0 ? (dayEvents[0].color || CATEGORY_COLORS[dayEvents[0].shiftId as string] || "#334155") : "");
+            : (hasExistingEvent ? (dayEvents[0].color || (dayEvents[0].shiftId ? CATEGORY_COLORS[dayEvents[0].shiftId as string] : null) || "#334155") : "");
 
     return (
         <div 

@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 import { format, parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
-import { CATEGORIES, DEFAULT_SHIFT_IDS } from "@/lib/constants";
+import { CATEGORIES, DEFAULT_SHIFT_IDS, CATEGORY_COLORS } from "@/lib/constants";
 
 export function useEventService() {
     const upsertByDate = useCallback(async (collectionName: "events" | "shifts", userId: string, dateStr: string, data: any) => {
@@ -70,15 +70,21 @@ export function useEventService() {
 
         const mapDoc = (doc: any, collectionName: "events" | "shifts") => {
             const data = doc.data();
+            const id = doc.id;
             return {
-                id: doc.id,
+                id,
                 ...data,
                 collectionName,
-                shiftId: data.shiftId || data.category,
+                // Ensure we always have a reachable shiftId/category identifier
+                shiftId: data.shiftId ?? data.category ?? id,
+                category: data.category ?? data.shiftId ?? id,
                 start: data.start instanceof Timestamp ? data.start.toDate() : data.start,
                 end: data.end instanceof Timestamp ? data.end.toDate() : data.end,
                 createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
                 updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+                // Fallback icon/color if missing
+                icon: data.icon || "HelpCircle",
+                color: data.color || (data.category ? CATEGORY_COLORS[data.category] : "#334155")
             };
         };
 
