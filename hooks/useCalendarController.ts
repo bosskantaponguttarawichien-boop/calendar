@@ -6,6 +6,7 @@ import { useEventService } from "@/hooks/useEventService";
 import { format, setMonth, setYear } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
+import { THAI_MONTHS } from "@/lib/constants";
 
 const SCROLL_DEBOUNCE = 200;
 const TRANSITION_DELAY = 150;
@@ -24,7 +25,10 @@ export function useCalendarController(userId: string | null) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
-    const [title, setTitle] = useState("");
+    const [title, setTitle] = useState(() => {
+        const d = new Date();
+        return `${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+    });
     const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
     const [pickerDate, setPickerDate] = useState(new Date());
     const [isPaginating, setIsPaginating] = useState(false);
@@ -69,7 +73,7 @@ export function useCalendarController(userId: string | null) {
         if (calendarRef.current) {
             const api = calendarRef.current.getApi();
             const date = api.getDate();
-            const month = date.toLocaleString("th-TH", { month: "long" });
+            const month = THAI_MONTHS[date.getMonth()];
             const year = date.getFullYear() + 543;
             setTitle(`${month} ${year}`);
             setPickerDate((prev) => (prev.getTime() !== date.getTime() ? date : prev));
@@ -194,7 +198,7 @@ export function useCalendarController(userId: string | null) {
         setActiveTab,
         pendingEvents,
         setPendingEvents,
-        // Handlers
+        updateTitle,
         handleDateClick,
         handleEventClick,
         handleWheel,

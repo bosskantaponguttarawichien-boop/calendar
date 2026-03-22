@@ -20,7 +20,7 @@ import { useLiff } from "@/hooks/useLiff";
 
 const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
-const MODAL_APPROX_HEIGHT = 200;
+const MODAL_APPROX_HEIGHT = 220;
 
 const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Date }) => {
     const dayName = THAI_DAY_NAMES[date.getDay()];
@@ -39,6 +39,7 @@ const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Da
         </div>
     );
 });
+DayHeader.displayName = "DayHeader";
 
 const DayCellContent = React.memo(({ 
     arg, 
@@ -103,6 +104,7 @@ const DayCellContent = React.memo(({
         </div>
     );
 });
+DayCellContent.displayName = "DayCellContent";
 
 const HomeScreen = () => {
     const { userId, loading: liffLoading } = useLiff();
@@ -134,6 +136,7 @@ const HomeScreen = () => {
         handleMonthSelect,
         handleYearChange,
         handlePickerToday,
+        updateTitle,
     } = useCalendarController(userId);
 
     if (liffLoading) {
@@ -169,6 +172,7 @@ const HomeScreen = () => {
                                 ref={calendarRef}
                                 plugins={CALENDAR_PLUGINS}
                                 initialView="dayGridMonth"
+                                initialDate={pickerDate}
                                 headerToolbar={false}
                                 locale="th"
                                 events={events}
@@ -179,7 +183,8 @@ const HomeScreen = () => {
                                 fixedWeekCount={true}
                                 dayHeaderFormat={{ weekday: "short" }}
                                  dayHeaderContent={(arg) => <DayHeader date={arg.date} pickerDate={pickerDate} />}
-                                dayCellClassNames={(arg) => {
+                                 datesSet={updateTitle}
+                                 dayCellClassNames={(arg) => {
                                     const dateStr = format(arg.date, "yyyy-MM-dd");
                                     const dayEvents = events.filter((e) => {
                                         const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
@@ -227,7 +232,11 @@ const HomeScreen = () => {
                         </button>
                         <button
                             onClick={() => {
-                                setSelectedDate(format(new Date(), "yyyy-MM-dd"));
+                                const today = new Date();
+                                const isSameMonth = pickerDate.getMonth() === today.getMonth() && 
+                                                   pickerDate.getFullYear() === today.getFullYear();
+                                const defaultDate = isSameMonth ? today : pickerDate;
+                                setSelectedDate(format(defaultDate, "yyyy-MM-dd"));
                                 setIsSummaryModalOpen(false);
                                 setIsModalOpen(true);
                             }}

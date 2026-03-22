@@ -20,3 +20,8 @@ export const CATEGORIES: Category[] = [
     { id: "nightafternoon", label: "ดึก/บ่าย", icon: MoonStar, color: "#8338EC" },
     { id: "custom", label: "เพิ่ม", icon: Plus, color: "#334155" },
 ];
+
+export const THAI_MONTHS = [
+    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+];

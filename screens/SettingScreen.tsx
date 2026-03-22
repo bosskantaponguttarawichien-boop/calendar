@@ -1,31 +1,27 @@
 "use client";
 
 import React from "react";
-import { User, Bell, Shield, Palette, ChevronRight, LogOut } from "lucide-react";
+import { Palette, ChevronRight, LogOut, User, ClipboardList, Moon } from "lucide-react";
 
 const settingItems = [
   {
-    group: "บัญชี",
+    group: "ทั่วไป",
     items: [
-      { icon: User, label: "โปรไฟล์", desc: "ชื่อ, รูปภาพ, ข้อมูลทั่วไป" },
-      { icon: Bell, label: "การแจ้งเตือน", desc: "ตั้งค่าการแจ้งเตือนกิจกรรม" },
+      { icon: ClipboardList, label: "รายการเวร", desc: "จัดการและดูรายการเวรทั้งหมด" },
     ],
   },
   {
     group: "การแสดงผล",
     items: [
       { icon: Palette, label: "ธีม", desc: "สี และรูปแบบการแสดงผล" },
-    ],
-  },
-  {
-    group: "ความปลอดภัย",
-    items: [
-      { icon: Shield, label: "ความเป็นส่วนตัว", desc: "จัดการสิทธิ์การเข้าถึง" },
+      { icon: Moon, label: "Dark Mode", desc: "สลับโหมดสว่าง-มืด" },
     ],
   },
 ];
 
 export default function SettingScreen({ user }: { user?: any }) {
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
+
   return (
     <div className="flex-grow overflow-y-auto px-1 pb-2">
       {/* Profile card */}
@@ -60,13 +56,10 @@ export default function SettingScreen({ user }: { user?: any }) {
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden">
             {group.items.map((item, i) => {
               const Icon = item.icon;
-              return (
-                <button
-                  key={item.label}
-                  className={`w-full flex items-center gap-4 px-5 py-4 active:bg-slate-50 transition-colors ${
-                    i < group.items.length - 1 ? "border-b border-slate-100" : ""
-                  }`}
-                >
+              const isDarkModeToggle = item.label === "Dark Mode";
+              
+              const content = (
+                <>
                   <div className="w-9 h-9 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
                     <Icon size={18} className="text-slate-700" />
                   </div>
@@ -74,7 +67,40 @@ export default function SettingScreen({ user }: { user?: any }) {
                     <p className="text-slate-800 font-medium text-sm">{item.label}</p>
                     <p className="text-slate-400 text-xs">{item.desc}</p>
                   </div>
-                  <ChevronRight size={16} className="text-slate-300" />
+                  {isDarkModeToggle ? (
+                    <div 
+                      className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center ${isDarkMode ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </div>
+                  ) : (
+                    <ChevronRight size={16} className="text-slate-300" />
+                  )}
+                </>
+              );
+
+              if (isDarkModeToggle) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className={`w-full flex items-center gap-4 px-5 py-4 transition-colors ${
+                      i < group.items.length - 1 ? "border-b border-slate-100" : ""
+                    }`}
+                  >
+                    {content}
+                  </button>
+                );
+              }
+
+              return (
+                <button
+                  key={item.label}
+                  className={`w-full flex items-center gap-4 px-5 py-4 active:bg-slate-50 transition-colors ${
+                    i < group.items.length - 1 ? "border-b border-slate-100" : ""
+                  }`}
+                >
+                  {content}
                 </button>
               );
             })}
