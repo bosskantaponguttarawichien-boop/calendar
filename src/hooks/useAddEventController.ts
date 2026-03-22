@@ -22,7 +22,7 @@ export function useAddEventController({
     initialStartTime, initialEndTime 
 }: UseAddEventControllerProps) {
     const router = useRouter();
-    const { addOrUpdateShiftByDate, updateCustomShiftGlobal, createCustomShiftTemplate } = useEventService();
+    const { addOrUpdateEventByDate } = useEventService();
     const [title, setTitle] = useState(initialTitle || "");
     const [selectedIcon, setSelectedIcon] = useState(initialIcon || "Sun");
     const [selectedColor, setSelectedColor] = useState(initialColor || "#334155");
@@ -47,19 +47,17 @@ export function useAddEventController({
             
 
             if (editId) {
-                await updateCustomShiftGlobal(userId, { shiftId: editId }, eventData);
+                // For now, if editing a custom event, we'll just update it in place as a regular event
+                if (dateStr) {
+                    await addOrUpdateEventByDate(userId, dateStr, eventData);
+                }
                 router.back();
             } else {
-                // Always create a template for new custom events
-                await createCustomShiftTemplate(userId, eventData);
-                
                 if (dateStr) {
                     const date = parseISO(dateStr);
                     eventData.start = date;
                     eventData.end = date;
-                    await addOrUpdateShiftByDate(userId, dateStr, eventData);
-                    
-                    // Return to the same date with modal open to see the new template icon
+                    await addOrUpdateEventByDate(userId, dateStr, eventData);
                     router.push(`/?date=${dateStr}&open=true`);
                 } else {
                     router.back();

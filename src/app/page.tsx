@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import HomeScreen from "@/screens/HomeScreen";
+import HomeScreen from "@/screens/home-screen/HomeScreen";
 
 
 export default function Home() {

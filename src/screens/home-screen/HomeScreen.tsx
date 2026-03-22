@@ -7,15 +7,15 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { ChevronDown, Plus } from "lucide-react";
 import { format } from "date-fns";
 
-import SettingScreen from "@/screens/SettingScreen";
-import ResultScreen from "@/screens/ResultScreen";
-import GroupScreen from "@/screens/GroupScreen";
-import EventModal from "@/components/EventModal";
-import EventSummaryModal from "@/components/EventSummaryModal";
-import MonthPickerModal from "@/components/MonthPickerModal";
-import NavBar from "@/components/NavBar";
+import SettingScreen from "@/screens/setting-screen/SettingScreen";
+import ResultScreen from "@/screens/result-screen/ResultScreen";
+import GroupScreen from "@/screens/group-screen/GroupScreen";
+import EventModal from "./components/EventModal";
+import EventSummaryModal from "./components/EventSummaryModal";
+import MonthPickerModal from "./components/MonthPickerModal";
+import NavBar from "./components/NavBar";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
-import { useCalendarController } from "@/hooks/useCalendarController";
+import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
 
 const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { parseISO, format } from "date-fns";
 
 import {
-    Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle, X
+    Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle
 } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
 
@@ -68,12 +68,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
             <div className={`bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.4)] p-4 pt-4 pb-4 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
                 <div className="relative flex flex-col items-center">
                     {/* Close button - matches EventModal */}
-                    <button
-                        onClick={onClose}
-                        className="absolute right-0 top-0 text-slate-800 dark:text-slate-200 hover:text-slate-400 p-2 transition-colors"
-                    >
-                        <X size={20} strokeWidth={3} />
-                    </button>
+
 
                     {/* Centered Header - refined size as requested */}
                     <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5">
