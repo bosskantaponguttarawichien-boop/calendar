@@ -30,8 +30,8 @@ function AddCustomContent() {
 
     if (liffLoading) {
         return (
-            <div className="min-h-[100dvh] bg-slate-50 flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+            <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-800 border-t-slate-800 dark:border-t-slate-200 rounded-full animate-spin" />
             </div>
         );
     }
@@ -39,38 +39,38 @@ function AddCustomContent() {
     const AVAILABLE_ICONS = CATEGORIES.filter((c) => c.id !== "custom").map((c) => ({ id: c.id, icon: c.icon }));
 
     return (
-        <div className="min-h-[100dvh] bg-slate-50 flex flex-col p-5 animate-in fade-in duration-500 pb-10">
+        <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0f172a] flex flex-col p-5 animate-in fade-in duration-500 pb-10 transition-colors">
 
 
             <main className="flex-grow flex flex-col items-center max-w-md mx-auto w-full">
-                <div className="bg-white rounded-[28px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50 w-full mb-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 opacity-50 transition-all" />
+                <div className="bg-white dark:bg-slate-800 rounded-[28px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border border-slate-50 dark:border-slate-700/50 w-full mb-6 relative overflow-hidden transition-colors">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 dark:bg-slate-700 rounded-full -mr-12 -mt-12 opacity-50 transition-all" />
 
                     <div className="space-y-5 relative z-10">
                         {/* Title Input */}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ชื่อเวร / กิจกรรม</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">ชื่อเวร / กิจกรรม</label>
                             <input
                                 autoFocus
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="เช่น OT พิเศษ / ประชุมสำนักงาน..."
-                                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-100 focus:bg-white transition-all placeholder:text-slate-300 shadow-inner"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-600 focus:bg-white dark:focus:bg-slate-800 transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 shadow-inner"
                             />
                         </div>
 
                         {/* Icon Selection */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">เลือกไอคอน</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">เลือกไอคอน</label>
                             <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar -mx-1 px-1">
                                 {AVAILABLE_ICONS.map((item) => (
                                     <button
                                         key={item.id}
                                         onClick={() => setSelectedIcon(item.id)}
                                         className={`shrink-0 w-10 h-10 rounded-[14px] flex items-center justify-center transition-all duration-300 ${selectedIcon === item.id
-                                                ? "bg-slate-800 text-white shadow-lg translate-y-[-1px]"
-                                                : "bg-white text-slate-400 border border-slate-100 hover:border-slate-300"
+                                                ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg translate-y-[-1px]"
+                                                : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-500"
                                             }`}
                                     >
                                         <item.icon size={18} />
@@ -81,15 +81,15 @@ function AddCustomContent() {
 
                         {/* Color Selection */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">เลือกสี</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">เลือกสี</label>
                             <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar -mx-1 px-1">
                                 {AVAILABLE_COLORS.map((color) => (
                                     <button
                                         key={color}
                                         onClick={() => setSelectedColor(color)}
                                         className={`shrink-0 w-10 h-10 rounded-[14px] transition-all relative flex items-center justify-center ${selectedColor === color
-                                                ? "ring-2 ring-slate-200 ring-offset-2 scale-105 shadow-md"
-                                                : "opacity-80 hover:opacity-100 border border-slate-100"
+                                                ? "ring-2 ring-slate-200 dark:ring-slate-600 ring-offset-2 dark:ring-offset-slate-800 scale-105 shadow-md"
+                                                : "opacity-80 hover:opacity-100 border border-slate-100 dark:border-slate-700"
                                             }`}
                                         style={{ backgroundColor: color }}
                                     >
@@ -103,27 +103,27 @@ function AddCustomContent() {
 
                         {/* Time Range */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ช่วงเวลา (ระบุหรือไม่ก็ได้)</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">ช่วงเวลา (ระบุหรือไม่ก็ได้)</label>
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter ml-1">เริ่ม</span>
-                                    <div className="flex items-center bg-slate-50 border border-slate-100 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-100 focus-within:bg-white transition-all shadow-inner">
+                                    <span className="text-[9px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter ml-1">เริ่ม</span>
+                                    <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-200 dark:focus-within:ring-slate-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-inner">
                                         <input
                                             type="time"
                                             value={startTime}
                                             onChange={(e) => setStartTime(e.target.value)}
-                                            className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
+                                            className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none color-scheme-dark"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter ml-1">สิ้นสุด</span>
-                                    <div className="flex items-center bg-slate-50 border border-slate-100 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-100 focus-within:bg-white transition-all shadow-inner">
+                                    <span className="text-[9px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter ml-1">สิ้นสุด</span>
+                                    <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700/50 rounded-xl px-2 py-2.5 focus-within:ring-2 focus-within:ring-slate-200 dark:focus-within:ring-slate-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-inner">
                                         <input
                                             type="time"
                                             value={endTime}
                                             onChange={(e) => setEndTime(e.target.value)}
-                                            className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
+                                            className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none color-scheme-dark"
                                         />
                                     </div>
                                 </div>
@@ -135,17 +135,17 @@ function AddCustomContent() {
                 <div className="w-full flex gap-3 mt-4">
                     <button
                         onClick={() => router.back()}
-                        className="flex-1 bg-white border border-slate-100 text-slate-400 py-3 rounded-[18px] font-black text-[15px] hover:bg-slate-50 active:scale-95 transition-all outline-none"
+                        className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-300 py-3 rounded-[18px] font-black text-[15px] hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all outline-none"
                     >
                         ยกเลิก
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={loading || !title.trim()}
-                        className="flex-[2] bg-slate-800 text-white py-3 rounded-[18px] font-black text-[15px] shadow-lg shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-2 outline-none group"
+                        className="flex-[2] bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 py-3 rounded-[18px] font-black text-[15px] shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:dark:opacity-50 flex items-center justify-center gap-2 outline-none group"
                     >
                         {loading ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-white/30 dark:border-slate-800/30 border-t-white dark:border-t-slate-800 rounded-full animate-spin" />
                         ) : (
                             <>
                                 <Save size={16} className="group-hover:scale-110 transition-transform" />
@@ -162,8 +162,8 @@ function AddCustomContent() {
 export default function AddCustomPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+            <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-800 border-t-slate-800 dark:border-t-slate-200 rounded-full animate-spin" />
             </div>
         }>
             <AddCustomContent />

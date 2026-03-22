@@ -38,11 +38,11 @@ export default function NavBar({ activeTab, onTabChange }: NavBarProps) {
   return (
     <nav
       ref={navRef}
-      className="relative bg-white/80 backdrop-blur-md border border-white/20 shadow-lg rounded-full px-3 py-2 flex items-center justify-between gap-2 max-w-[420px] w-full mx-auto mb-2 shrink-0"
+      className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-lg rounded-full px-3 py-2 flex items-center justify-between gap-2 max-w-[420px] w-full mx-auto mb-2 shrink-0"
     >
       {/* Sliding pill */}
       <span
-        className="absolute top-2 bottom-2 rounded-full bg-[#1A1A1A] shadow-md pointer-events-none"
+        className="absolute top-2 bottom-2 rounded-full bg-[#1A1A1A] dark:bg-white shadow-md pointer-events-none"
         style={{
           left: pillStyle.left,
           width: pillStyle.width,
@@ -60,7 +60,9 @@ export default function NavBar({ activeTab, onTabChange }: NavBarProps) {
             onClick={() => onTabChange(item.id)}
             className={cn(
               "relative z-10 flex items-center justify-center p-3.5 rounded-full transition-colors duration-200",
-              isActive ? "text-white" : "text-[#1A1A1A]/40 hover:text-[#1A1A1A]/70"
+              isActive
+                ? "text-white dark:text-[#1A1A1A]"
+                : "text-[#1A1A1A]/40 dark:text-white/40 hover:text-[#1A1A1A]/70 dark:hover:text-white/70"
             )}
           >
             <Icon size={24} strokeWidth={2.2} />

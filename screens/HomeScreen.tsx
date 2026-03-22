@@ -34,7 +34,7 @@ const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Da
         <div className="flex flex-col items-center gap-1">
             <span className={isTodayDay ? "font-bold" : ""}>{dayName}</span>
             {isTodayDay && (
-                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800" />
+                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-slate-800 dark:border-b-slate-200" />
             )}
         </div>
     );
@@ -141,8 +141,8 @@ const HomeScreen = () => {
 
     if (liffLoading) {
         return (
-            <div className="flex items-center justify-center h-[100dvh] bg-[#f8fafc]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+            <div className="flex items-center justify-center h-[100dvh] bg-[#f8fafc] dark:bg-[#0f172a]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 dark:border-slate-200"></div>
             </div>
         );
     }
@@ -215,19 +215,19 @@ const HomeScreen = () => {
     };
 
     return (
-        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] transition-all duration-500 ${isModalOpen ? "pt-0" : "pt-2"}`}>
+        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300 ${isModalOpen ? "pt-0" : "pt-2"}`}>
             {/* Header — only show on home tab */}
             {activeTab === "home" && (
                 <div className={`flex justify-between items-center shrink-0 transition-all duration-500 ease-in-out ${isModalOpen ? "h-0 mb-0 pointer-events-none opacity-0 overflow-hidden" : "h-12 mb-2 opacity-100"}`}>
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
-                        className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-sm active:scale-95 transition-transform"
+                        className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm active:scale-95 transition-transform"
                     >
                         {title}
                         <ChevronDown size={16} className="text-slate-400" />
                     </button>
                     <div className="flex items-center gap-2">
-                        <button className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-slate-700 font-bold text-xs active:scale-95 transition-transform">
+                        <button className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-95 transition-transform">
                             ปฏิทินของฉัน
                         </button>
                         <button

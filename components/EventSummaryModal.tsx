@@ -65,10 +65,10 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
             />
 
             {/* Modal Sheet */}
-            <div className={`bg-white w-full max-w-lg rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 pt-5 pb-8 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
+            <div className={`bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.4)] p-4 pt-5 pb-8 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-0.5 px-2">
-                        <span className="text-slate-400 font-bold text-xs uppercase tracking-wider">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold text-xs uppercase tracking-wider">
                             {getThaiDate()}
                         </span>
                     </div>
@@ -80,7 +80,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                                 const eventColor = event.color || CATEGORY_COLORS[event.category] || "#334155";
                                 
                                 return (
-                                    <div key={event.id || idx} className="flex items-center justify-between bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                                    <div key={event.id || idx} className="flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
                                         <div className="flex items-center gap-4">
                                             <div 
                                                 className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm" 
@@ -89,7 +89,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                                                 <IconComponent size={24} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-lg font-bold text-slate-800 leading-tight">
+                                                <span className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight">
                                                     {event.title}
                                                 </span>
                                                 {(event.startTime || event.endTime) && (
@@ -102,7 +102,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
 
                                         <button
                                             onClick={onEdit}
-                                            className="bg-white text-slate-400 p-2 rounded-xl shadow-sm border border-slate-100 hover:text-slate-600 transition-all active:scale-95"
+                                            className="bg-white dark:bg-slate-700 text-slate-400 dark:text-slate-300 p-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 hover:text-slate-600 dark:hover:text-white transition-all active:scale-95"
                                         >
                                             <span className="text-xs font-bold px-2">แก้ไข</span>
                                         </button>
@@ -110,7 +110,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                                 );
                             })
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-8 text-slate-300 gap-2">
+                            <div className="flex flex-col items-center justify-center py-8 text-slate-300 dark:text-slate-600 gap-2">
                                 <HelpCircle size={40} strokeWidth={1.5} />
                                 <span className="text-sm font-bold">ไม่มีกิจกรรม</span>
                             </div>
@@ -120,7 +120,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                     {dateEvents.length === 0 && (
                         <button
                             onClick={onEdit}
-                            className="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:bg-slate-700 transition-all active:scale-95 mt-2"
+                            className="w-full bg-slate-800 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-bold text-base shadow-lg hover:bg-slate-700 dark:hover:bg-slate-100 transition-all active:scale-95 mt-2"
                         >
                             เพิ่มกิจกรรม
                         </button>

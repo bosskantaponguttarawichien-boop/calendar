@@ -1,10 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #1e293b;
   --primary: #00b900;
   --primary-foreground: #ffffff;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
 }
 
 @theme inline {
@@ -89,12 +96,22 @@ body {
   margin: 0;
   overflow-y: auto !important;
   touch-action: auto !important;
+  transition: background 0.3s, color 0.3s;
+}
+
+.dark body {
+  background-color: #0f172a;
+  background: linear-gradient(to bottom, #0f172a 0%, #1e293b 100%);
 }
 
 html {
   height: 100%;
   background-color: #e2e8f0;
   /* Ensures safe areas and overscroll match the theme */
+}
+
+.dark html {
+  background-color: #0f172a;
 }
 
 /* Aggressively hide scrollbars globally for all elements */
@@ -149,6 +166,14 @@ html {
   border: none !important;
 }
 
+.dark .fc .fc-col-header-cell,
+.dark .fc .fc-col-header,
+.dark .fc .fc-scrollgrid-section-header,
+.dark .fc .fc-scrollgrid-section-header>th,
+.dark .fc .fc-scrollgrid-section-header>td {
+  color: #94a3b8 !important;
+}
+
 
 
 /* Date cells as vertical pills */
@@ -171,6 +196,12 @@ html {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden !important;
   position: relative;
+}
+
+.dark .fc .fc-daygrid-day-frame {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 8px 20px -5px rgb(0 0 0 / 0.3) !important;
 }
 
 .fc .fc-daygrid-day.has-event .fc-daygrid-day-frame {
@@ -220,10 +251,20 @@ html {
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
+.dark .pill-date-circle {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
 /* When has event, the number circle should be white */
 .fc .fc-daygrid-day.has-event .pill-date-circle {
     background-color: #f8fafc !important;
     color: #0f172a !important;
+}
+
+.dark .fc .fc-daygrid-day.has-event .pill-date-circle {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
 }
 
 /* Current/Active date number circle (Today) - RED TEXT ALWAYS */
@@ -320,4 +361,9 @@ html {
     box-shadow: none !important;
     padding: 5px !important; /* Compensate for removed 4px border + 1px original padding */
     background-color: white !important;
+}
+
+.dark .fc .fc-daygrid-day.selected-day .fc-daygrid-day-frame,
+.dark .fc .fc-daygrid-day.selected-day.fc-day-today .fc-daygrid-day-frame {
+    background-color: #1e293b !important;
 }

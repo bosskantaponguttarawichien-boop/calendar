@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const notoThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],
@@ -28,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" className={notoThai.variable}>
-      <body className="antialiased bg-[#f8fafc] text-[#1A1A1A]">
-        {children}
+    <html lang="th" className={notoThai.variable} suppressHydrationWarning>
+      <body className="antialiased bg-[#f8fafc] dark:bg-[#0f172a] text-[#1A1A1A] dark:text-white transition-colors duration-300">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
