@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Save } from "lucide-react";
 import { useAddEventController } from "@/hooks/useAddEventController";
+import { useLiff } from "@/hooks/useLiff";
 import { CATEGORIES } from "@/lib/constants";
 
 const AVAILABLE_COLORS = [
@@ -13,6 +14,7 @@ const AVAILABLE_COLORS = [
 
 function AddCustomContent() {
     const router = useRouter();
+    const { userId, loading: liffLoading } = useLiff();
     const searchParams = useSearchParams();
     const dateStr = searchParams.get("date");
 
@@ -24,7 +26,15 @@ function AddCustomContent() {
         endTime, setEndTime,
         loading,
         handleSave,
-    } = useAddEventController({ dateStr, userId: "local-user" });
+    } = useAddEventController({ dateStr, userId: userId || "local-user" });
+
+    if (liffLoading) {
+        return (
+            <div className="min-h-[100dvh] bg-slate-50 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     const AVAILABLE_ICONS = CATEGORIES.filter((c) => c.id !== "custom").map((c) => ({ id: c.id, icon: c.icon }));
 

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
-import { db } from "@/lib/firebase";
-import { collection, query, onSnapshot, where } from "firebase/firestore";
+import { useEventService } from "@/hooks/useEventService";
 import { format, setMonth, setYear } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
@@ -11,9 +10,10 @@ import { EventData } from "@/types/event.types";
 const SCROLL_DEBOUNCE = 200;
 const TRANSITION_DELAY = 150;
 
-export function useCalendarController() {
+export function useCalendarController(userId: string | null) {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { subscribeToEvents } = useEventService();
 
     const calendarRef = useRef<FullCalendar>(null);
     const calendarWrapperRef = useRef<HTMLDivElement>(null);
@@ -30,7 +30,7 @@ export function useCalendarController() {
     const [isPaginating, setIsPaginating] = useState(false);
     const [animationClass, setAnimationClass] = useState("");
     const [activeTab, setActiveTab] = useState("home");
-    const [pendingEvents, setPendingEvents] = useState<Record<string, string>>(() => {
+    const [pendingEvents, setPendingEvents] = useState<Record<string, string | number>>(() => {
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("pendingEvents");
             return saved ? JSON.parse(saved) : {};
@@ -58,19 +58,12 @@ export function useCalendarController() {
 
     // Firestore real-time listener
     useEffect(() => {
-        const userId = "local-user";
-        const q = query(collection(db, "events"), where("userId", "==", userId));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const eventData = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-                start: doc.data().start.toDate ? doc.data().start.toDate() : doc.data().start,
-                end: doc.data().end.toDate ? doc.data().end.toDate() : doc.data().end,
-            })) as EventData[];
+        if (!userId) return;
+        const unsubscribe = subscribeToEvents(userId, (eventData) => {
             setEvents(eventData);
         });
         return () => unsubscribe();
-    }, []);
+    }, [userId, subscribeToEvents]);
 
     const updateTitle = useCallback(() => {
         if (calendarRef.current) {

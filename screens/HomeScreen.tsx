@@ -16,6 +16,7 @@ import MonthPickerModal from "@/components/MonthPickerModal";
 import NavBar from "@/components/NavBar";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
 import { useCalendarController } from "@/hooks/useCalendarController";
+import { useLiff } from "@/hooks/useLiff";
 
 const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
@@ -47,7 +48,7 @@ const DayCellContent = React.memo(({
 }: { 
     arg: any; 
     events: any[]; 
-    pendingEvents: Record<string, string>;
+    pendingEvents: Record<string, string | number>;
     isModalOpen: boolean;
 }) => {
     const dateStr = format(arg.date, "yyyy-MM-dd");
@@ -58,15 +59,25 @@ const DayCellContent = React.memo(({
 
     const pendingCat = pendingEvents[dateStr];
     const isDeleted = pendingCat === "delete";
-    const isCustom = pendingCat?.startsWith("custom:");
+    const isCustom = (typeof pendingCat === "string" && pendingCat.startsWith("custom:")) || (dayEvents.length > 0 && typeof dayEvents[0].shiftId === "number" && !pendingCat);
     const actualCatId = isCustom ? "custom" : pendingCat;
     
-    const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (dayEvents.length > 0 ? dayEvents[0].category : null);
+    const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (dayEvents.length > 0 ? dayEvents[0].shiftId : null);
     const category = CATEGORIES.find(c => c.id === activeCatId);
+    
+    // Virtual category for custom numeric shifts
+    const customCategory = (typeof activeCatId === "number" && dayEvents.length > 0) ? {
+        icon: CATEGORIES.find(c => c.id === dayEvents[0].icon)?.icon || CATEGORIES[0].icon,
+        label: dayEvents[0].title
+    } : null;
 
-    const color = (pendingCat && pendingCat !== "delete") 
-        ? (CATEGORY_COLORS[actualCatId] || "#334155")
-        : (dayEvents.length > 0 ? (dayEvents[0].color || CATEGORY_COLORS[dayEvents[0].category] || "#334155") : "");
+    const displayCategory = category || customCategory;
+
+    const color = isDeleted 
+        ? "" 
+        : (pendingCat && pendingCat !== "delete")
+            ? (CATEGORY_COLORS[actualCatId] || "#334155")
+            : (dayEvents.length > 0 ? (dayEvents[0].color || CATEGORY_COLORS[dayEvents[0].shiftId as string] || "#334155") : "");
 
     return (
         <div 
@@ -75,16 +86,16 @@ const DayCellContent = React.memo(({
         >
             <div className="pill-date-circle shrink-0 z-10">{arg.dayNumberText}</div>
             
-            {category && !isDeleted && (
+            {displayCategory && !isDeleted && (
                 <div className="flex flex-col items-center justify-center flex-grow w-full animate-in zoom-in-50 duration-300 z-10">
-                    <category.icon 
+                    <displayCategory.icon 
                         size={!isModalOpen ? 16 : 14} 
                         className={`text-white transition-all ${!isModalOpen ? "mb-0.5" : ""}`} 
                         strokeWidth={2.5} 
                     />
                     {!isModalOpen && (
                         <span className="text-[8px] font-black text-white uppercase tracking-tighter text-center leading-[1] px-0.5">
-                            {category.label}
+                            {displayCategory.label}
                         </span>
                     )}
                 </div>
@@ -94,6 +105,7 @@ const DayCellContent = React.memo(({
 });
 
 const HomeScreen = () => {
+    const { userId, loading: liffLoading } = useLiff();
     const {
         calendarRef,
         calendarWrapperRef,
@@ -122,7 +134,15 @@ const HomeScreen = () => {
         handleMonthSelect,
         handleYearChange,
         handlePickerToday,
-    } = useCalendarController();
+    } = useCalendarController(userId);
+
+    if (liffLoading) {
+        return (
+            <div className="flex items-center justify-center h-[100dvh] bg-[#f8fafc]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+            </div>
+        );
+    }
 
     const renderPageContent = () => {
         switch (activeTab) {
@@ -166,7 +186,8 @@ const HomeScreen = () => {
                                         return format(start, "yyyy-MM-dd") === dateStr;
                                     });
                                     const pendingCat = pendingEvents[dateStr];
-                                    const hasEvent = dayEvents.length > 0 || (pendingCat && pendingCat !== "delete");
+                                    const isDeleted = pendingCat === "delete";
+                                    const hasEvent = !isDeleted && (dayEvents.length > 0 || (pendingCat && pendingCat !== "delete"));
                                     
                                     return [
                                         dateStr === selectedDate ? "selected-day" : "",
@@ -195,13 +216,13 @@ const HomeScreen = () => {
                 <div className={`flex justify-between items-center shrink-0 transition-all duration-500 ease-in-out ${isModalOpen ? "h-0 mb-0 pointer-events-none opacity-0 overflow-hidden" : "h-12 mb-2 opacity-100"}`}>
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
-                        className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-base active:scale-95 transition-transform"
+                        className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 text-slate-800 font-bold text-sm active:scale-95 transition-transform"
                     >
                         {title}
-                        <ChevronDown size={18} className="text-slate-400" />
+                        <ChevronDown size={16} className="text-slate-400" />
                     </button>
                     <div className="flex items-center gap-2">
-                        <button className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-slate-700 font-bold text-sm active:scale-95 transition-transform">
+                        <button className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-slate-700 font-bold text-xs active:scale-95 transition-transform">
                             ปฏิทินของฉัน
                         </button>
                         <button
@@ -210,9 +231,9 @@ const HomeScreen = () => {
                                 setIsSummaryModalOpen(false);
                                 setIsModalOpen(true);
                             }}
-                            className="bg-[#C2185B] text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-[#AD1457] shrink-0"
+                            className="bg-[#C2185B] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-[#AD1457] shrink-0"
                         >
-                            <Plus size={28} strokeWidth={2.5} />
+                            <Plus size={22} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
@@ -241,7 +262,7 @@ const HomeScreen = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 selectedDate={selectedDate}
-                userId="local-user"
+                userId={userId || "local-user"}
                 setSelectedDate={setSelectedDate}
                 events={events}
                 pendingEvents={pendingEvents}

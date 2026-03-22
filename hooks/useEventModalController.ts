@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, writeBatch, doc } from "firebase/firestore";
+import { useEventService } from "@/hooks/useEventService";
 import { format, parseISO, addDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
@@ -12,8 +11,8 @@ interface UseEventModalControllerProps {
     selectedDate: string | null;
     userId: string | undefined;
     events: EventData[];
-    pendingEvents: Record<string, string>;
-    setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+    pendingEvents: Record<string, string | number>;
+    setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
     setSelectedDate: (date: string | null) => void;
     onClose: () => void;
 }
@@ -28,8 +27,9 @@ export function useEventModalController({
     onClose,
 }: UseEventModalControllerProps) {
     const router = useRouter();
+    const { saveBatchEvents } = useEventService();
     const [loading, setLoading] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | number | null>(null);
 
     const advanceToNextDay = () => {
         if (!selectedDate) return;
@@ -38,11 +38,17 @@ export function useEventModalController({
         setSelectedCategory(null);
     };
 
-    const handleIconClick = (categoryId: string) => {
+    const handleIconClick = (categoryId: string | number) => {
         if (!selectedDate) return;
 
         if (categoryId === "custom") {
-            router.push(`/add?date=${selectedDate}`);
+            const url = `/add?date=${selectedDate}`;
+            console.log("[Modal] Navigating to:", url);
+            router.push(url);
+            // Delay closing slightly to ensure push is registered
+            setTimeout(() => {
+                onClose();
+            }, 100);
             return;
         }
 
@@ -59,41 +65,7 @@ export function useEventModalController({
 
         setLoading(true);
         try {
-            const batch = writeBatch(db);
-            
-            for (const date of datesToSave) {
-                const categoryId = pendingEvents[date];
-                const existingEvent = events.find((e) => {
-                    const eventDate = e.start instanceof Date ? e.start : (e.start as any).toDate();
-                    return format(eventDate, "yyyy-MM-dd") === date && e.userId === userId;
-                });
-
-                if (categoryId === "delete") {
-                    if (existingEvent) {
-                        batch.delete(doc(db, "events", existingEvent.id));
-                    }
-                    continue;
-                }
-
-                const category = CATEGORIES.find((c) => c.id === categoryId);
-                const eventData = {
-                    userId,
-                    title: category?.label || "กิจกรรม",
-                    category: categoryId,
-                    start: parseISO(date),
-                    end: parseISO(date),
-                    updatedAt: new Date(),
-                };
-
-                if (existingEvent) {
-                    batch.update(doc(db, "events", existingEvent.id), eventData);
-                } else {
-                    const newDocRef = doc(collection(db, "events"));
-                    batch.set(newDocRef, { ...eventData, createdAt: new Date() });
-                }
-            }
-
-            await batch.commit();
+            await saveBatchEvents(userId, pendingEvents, events);
             setPendingEvents({});
             onClose();
         } catch (error) {

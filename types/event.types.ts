@@ -4,7 +4,7 @@ export interface EventData {
     id: string;
     userId: string;
     title: string;
-    category: string;
+    shiftId: string | number;
     icon?: string;
     color?: string;
     startTime?: string | null;
@@ -13,6 +13,7 @@ export interface EventData {
     end: Date;
     createdAt?: Date;
     updatedAt?: Date;
+    collectionName?: "events" | "shifts";
 }
 
 export interface Category {

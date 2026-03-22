@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
@@ -14,8 +14,8 @@ interface EventModalProps {
     userId: string | undefined;
     setSelectedDate: (date: string | null) => void;
     events: EventData[];
-    pendingEvents: Record<string, string>;
-    setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+    pendingEvents: Record<string, string | number>;
+    setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
 }
 
 const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, events, pendingEvents, setPendingEvents }: EventModalProps) => {
@@ -31,6 +31,47 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
         handleCancel,
         handleIconClick,
     } = useEventModalController({ selectedDate, userId, events, pendingEvents, setPendingEvents, setSelectedDate, onClose });
+
+    // Extract unique custom shifts (numeric IDs or custom string IDs)
+    const customShifts = useMemo(() => {
+        return events
+            .filter(e => {
+                const isNumericId = typeof e.shiftId === "number";
+                const isManualCustom = typeof e.shiftId === "string" && !isNaN(Number(e.shiftId));
+                return isNumericId || isManualCustom;
+            })
+            .reduce((acc, curr) => {
+                const key = `${curr.title}-${curr.icon}-${curr.color}`;
+                if (!acc.find(item => `${item.title}-${item.icon}-${item.color}` === key)) {
+                    acc.push(curr);
+                }
+                return acc;
+            }, [] as EventData[]);
+    }, [events]);
+
+    const ALL_ITEMS = useMemo(() => {
+        const standardCats = CATEGORIES.filter(c => c.id !== "custom");
+        const plusCat = CATEGORIES.find(c => c.id === "custom");
+
+        return [
+            ...standardCats.map(c => ({ id: c.id, label: c.label, icon: c.icon, color: c.color })),
+            ...customShifts.map(s => ({
+                id: s.shiftId,
+                label: s.title || "เวรพิเศษ",
+                icon: CATEGORIES.find(c => c.id === s.icon)?.icon || CATEGORIES[0].icon,
+                color: s.color || "#334155"
+            })),
+            ...(plusCat ? [{ id: plusCat.id, label: plusCat.label, icon: plusCat.icon, color: plusCat.color }] : [])
+        ];
+    }, [customShifts]);
+
+    useEffect(() => {
+        console.log("Current UserID in Modal:", userId);
+        console.log("Total Events received:", events.length);
+        console.log("Custom Shifts detected:", customShifts.length);
+    }, [userId, events, customShifts]);
+
+    const showArrows = ALL_ITEMS.length > 5;
 
     useEffect(() => {
         if (isOpen) {
@@ -75,8 +116,8 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
                         {getThaiHeader()}
                     </h2>
 
-                    <div className={`relative w-full mb-8 ${CATEGORIES.length > 5 ? "px-8" : "px-4"}`}>
-                        {CATEGORIES.length > 5 && (
+                    <div className={`relative w-full mb-8 ${showArrows ? "px-8" : "px-4"}`}>
+                        {showArrows && (
                             <button
                                 onClick={() => scroll("left")}
                                 className="absolute left-0.5 top-[32%] -translate-y-1/2 z-20 text-slate-400 hover:text-slate-600 w-7 h-7 flex items-center justify-center shadow-sm border border-slate-50 bg-white rounded-full transition-all active:scale-90"
@@ -87,15 +128,15 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
 
                         <div
                             ref={scrollContainerRef}
-                            className={`grid grid-flow-col ${CATEGORIES.length > 5 ? "auto-cols-[20%]" : "grid-cols-5"} overflow-x-auto no-scrollbar w-full snap-x snap-mandatory scroll-smooth pb-1`}
+                            className={`grid grid-flow-col ${showArrows ? "auto-cols-[20%]" : "grid-cols-5"} overflow-x-auto no-scrollbar w-full snap-x snap-mandatory scroll-smooth pb-1`}
                         >
-                            {CATEGORIES.map((cat) => (
+                            {ALL_ITEMS.map((cat) => (
                                 <div key={cat.id} className="flex flex-col items-center gap-3 flex-shrink-0 snap-center">
                                     <button
                                         onClick={() => handleIconClick(cat.id)}
                                         className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg active:scale-95
                                             ${selectedCategory === cat.id ? "scale-110 ring-4 ring-slate-100" : "scale-100 hover:scale-105"}`}
-                                        style={{ backgroundColor: cat.color }}
+                                        style={{ backgroundColor: typeof cat.color === 'string' ? cat.color : undefined }}
                                     >
                                         <cat.icon size={22} className="text-white" strokeWidth={2.5} />
                                     </button>
@@ -108,7 +149,7 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
                             ))}
                         </div>
 
-                        {CATEGORIES.length > 5 && (
+                        {showArrows && (
                             <button
                                 onClick={() => scroll("right")}
                                 className="absolute right-0.5 top-[32%] -translate-y-1/2 z-20 text-slate-400 hover:text-slate-600 w-7 h-7 flex items-center justify-center shadow-sm border border-slate-50 bg-white rounded-full transition-all active:scale-90"
