@@ -4,11 +4,8 @@ import { useCallback } from "react";
 import { db } from "@/lib/firebase";
 import { 
     collection, 
-    addDoc, 
     query, 
     where, 
-    getDocs, 
-    updateDoc, 
     doc,
     onSnapshot,
     writeBatch,
@@ -18,46 +15,6 @@ import { format, parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
 
 export function useEventService() {
-    const cleanData = (data: any) => {
-        return Object.fromEntries(
-            Object.entries(data).filter(([, v]) => v !== undefined)
-        ) as any;
-    };
-
-    const upsertByDate = useCallback(async (userId: string, dateStr: string, data: any) => {
-        try {
-            const q = query(collection(db, "events"), where("userId", "==", userId));
-            const snapshot = await getDocs(q);
-            
-            const existingDoc = snapshot.docs.find(doc => {
-                const docData = doc.data();
-                const start = docData.start instanceof Timestamp ? docData.start.toDate() : docData.start;
-                return format(start, "yyyy-MM-dd") === dateStr;
-            });
-
-            if (existingDoc) {
-                await updateDoc(doc(db, "events", existingDoc.id), cleanData({
-                    ...data,
-                    updatedAt: new Date()
-                }));
-                return { id: existingDoc.id, type: 'update' };
-            } else {
-                const docRef = await addDoc(collection(db, "events"), cleanData({
-                    ...data,
-                    userId,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                }));
-                return { id: docRef.id, type: 'create' };
-            }
-        } catch (error) {
-            console.error(`Error in upsertByDate:`, error);
-            throw error;
-        }
-    }, []);
-
-    const addOrUpdateEventByDate = useCallback((userId: string, dateStr: string, data: any) => 
-        upsertByDate(userId, dateStr, data), [upsertByDate]);
 
     const subscribeToEvents = useCallback((
         userId: string, 
@@ -151,7 +108,6 @@ export function useEventService() {
 
     return { 
         subscribeToEvents, 
-        addOrUpdateEventByDate, 
         saveBatchEvents
     };
 }

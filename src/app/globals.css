@@ -324,6 +324,10 @@ html {
   color: white !important;
 }
 
+.fc .fc-daygrid-day.selected-day.fc-day-today .pill-date-circle {
+  color: #ef4444 !important;
+}
+
 /* If Today and Selected overlap, keep background black but use Red text from above */
 
 /* Events as small dots below the number */

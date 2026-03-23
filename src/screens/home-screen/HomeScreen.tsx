@@ -175,7 +175,6 @@ const HomeScreen = () => {
                             onTouchEnd={handleTouchEnd}
                         >
                             <FullCalendar
-                                key={`calendar-${isModalOpen}`}
                                 ref={calendarRef}
                                 plugins={CALENDAR_PLUGINS}
                                 initialView="dayGridMonth"

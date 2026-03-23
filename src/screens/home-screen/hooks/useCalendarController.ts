@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { useEventService } from "@/hooks/useEventService";
-import { format, setMonth, setYear } from "date-fns";
+import { format, setMonth, setYear, parseISO } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
 import { THAI_MONTHS } from "@/lib/constants";
@@ -53,6 +53,61 @@ export function useCalendarController(userId: string | null) {
         }
     }, [pendingEvents]);
 
+    // Firestore real-time listener
+    useEffect(() => {
+        if (!userId) return;
+        const unsubscribe = subscribeToEvents(userId, (eventData) => {
+            setEvents(eventData);
+        }, startDate, endDate);
+        return () => unsubscribe();
+    }, [userId, subscribeToEvents, startDate, endDate]);
+
+    const updateTitle = useCallback(() => {
+        if (calendarRef.current) {
+            const api = calendarRef.current.getApi();
+            const date = api.getDate();
+            const month = THAI_MONTHS[date.getMonth()];
+            const year = date.getFullYear() + 543;
+            setTitle(`${month} ${year}`);
+            setPickerDate((prev) => (prev.getTime() !== date.getTime() ? date : prev));
+
+            // Update visible range for data optimization
+            const { activeStart, activeEnd } = api.view;
+            setStartDate(activeStart);
+            setEndDate(activeEnd);
+        }
+    }, []);
+
+    // Sync calendar view when selectedDate changes (e.g. from advanceToNextDay)
+    useEffect(() => {
+        if (!selectedDate || !calendarRef.current) return;
+        const api = calendarRef.current.getApi();
+        const currentViewDate = api.getDate();
+        const targetDate = parseISO(selectedDate);
+
+        // Only jump if target is in a different month
+        if (targetDate.getMonth() !== currentViewDate.getMonth() || 
+            targetDate.getFullYear() !== currentViewDate.getFullYear()) {
+            // Wrap in requestAnimationFrame to move outside of React's render/effect cycle
+            // and avoid "flushSync was called from inside a lifecycle method" warning
+            requestAnimationFrame(() => {
+                if (calendarRef.current) {
+                    calendarRef.current.getApi().gotoDate(targetDate);
+                }
+            });
+        }
+    }, [selectedDate]);
+
+    // Handle calendar resize when modal opens/closes
+    useEffect(() => {
+        if (calendarRef.current) {
+            // Small delay to allow layout to settle
+            setTimeout(() => {
+                calendarRef.current?.getApi().updateSize();
+            }, 50);
+        }
+    }, [isModalOpen]);
+
     // Handle URL params (return from /add page)
     useEffect(() => {
         const dateParam = searchParams.get("date");
@@ -77,21 +132,6 @@ export function useCalendarController(userId: string | null) {
         return () => unsubscribe();
     }, [userId, subscribeToEvents, startDate, endDate]);
 
-    const updateTitle = useCallback(() => {
-        if (calendarRef.current) {
-            const api = calendarRef.current.getApi();
-            const date = api.getDate();
-            const month = THAI_MONTHS[date.getMonth()];
-            const year = date.getFullYear() + 543;
-            setTitle(`${month} ${year}`);
-            setPickerDate((prev) => (prev.getTime() !== date.getTime() ? date : prev));
-            
-            // Update visible range for data optimization
-            const { activeStart, activeEnd } = api.view;
-            setStartDate(activeStart);
-            setEndDate(activeEnd);
-        }
-    }, []);
 
     // Sync title when switching back to home tab
     useEffect(() => {

@@ -45,7 +45,7 @@ export function useShiftController(userId: string | undefined) {
     }, [userId, subscribeToUserSettings]);
 
     const allShifts = useMemo(() => {
-        // 1. Convert MainShifts to Shift format (System shifts)
+        // Create system shifts from main shifts
         const systemShifts: Shift[] = mainShifts.map(ms => ({
             id: ms.id,
             userId: "system",
@@ -56,50 +56,33 @@ export function useShiftController(userId: string | undefined) {
             endTime: ms.endTime,
         }));
 
-        // 2. Identify which user shifts are "overrides" of main shifts
-        const overrideMap = new Map<string, Shift>();
+        // Separate user shifts into overrides and unique shifts
+        const overrides = new Map<string, Shift>();
         const uniqueUserShifts: Shift[] = [];
 
         userShifts.forEach(us => {
-            if (us.mainShiftId) {
-                overrideMap.set(us.mainShiftId, us);
+            const mainId = us.mainShiftId || systemShifts.find(ss => ss.title === us.title)?.id;
+            if (mainId) {
+                overrides.set(mainId, { ...us, id: mainId, realId: us.id });
             } else {
-                const matchingMain = systemShifts.find(ss => ss.title === us.title);
-                if (matchingMain) {
-                    overrideMap.set(matchingMain.id, us);
-                } else {
-                    uniqueUserShifts.push(us);
-                }
+                uniqueUserShifts.push(us);
             }
         });
 
-        // 3. Build the merged list
-        const merged = systemShifts.map(ss => {
-            const override = overrideMap.get(ss.id);
-            return override ? { ...override, id: ss.id, realId: override.id } : ss;
+        // Merge and sort
+        const combined = [
+            ...systemShifts.map(ss => overrides.get(ss.id) || ss),
+            ...uniqueUserShifts
+        ];
+
+        if (shiftsOrder.length === 0) return combined;
+
+        return [...combined].sort((a, b) => {
+            const aIdx = shiftsOrder.indexOf(a.id);
+            const bIdx = shiftsOrder.indexOf(b.id);
+            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+            return aIdx !== -1 ? -1 : (bIdx !== -1 ? 1 : 0);
         });
-
-        const combined = [...merged, ...uniqueUserShifts];
-
-        // 4. Sort by shiftsOrder
-        if (shiftsOrder.length > 0) {
-            return [...combined].sort((a, b) => {
-                const aIndex = shiftsOrder.indexOf(a.id);
-                const bIndex = shiftsOrder.indexOf(b.id);
-                
-                // If both are in the order array, sort by it
-                if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-                
-                // If only one is in the array, put it first
-                if (aIndex !== -1) return -1;
-                if (bIndex !== -1) return 1;
-                
-                // If none are in the array, keep original relative order
-                return 0;
-            });
-        }
-
-        return combined;
     }, [mainShifts, userShifts, shiftsOrder]);
 
     const updateShiftsOrder = useCallback(async (newOrder: string[]) => {

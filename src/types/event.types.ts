@@ -9,6 +9,7 @@ export interface Shift {
     startTime?: string | null;
     endTime?: string | null;
     mainShiftId?: string | null; // Links to a MainShift if this is an override
+    realId?: string;            // The underlying document ID if this is an override
     createdAt?: Date;
     updatedAt?: Date;
 }
