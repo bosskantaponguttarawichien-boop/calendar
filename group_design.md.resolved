@@ -1,0 +1,58 @@
+# Group Data Structure for Shift Sharing
+
+This design defines a minimal structure for creating groups to share shift schedules among a maximum of 3 members.
+
+## Core Purpose: Shift Sharing (Share ตารางเวร)
+- **Primary Function**: To allow members to see each other's schedules.
+- **Excluded Functions**: No chat, no status updates, no messaging.
+
+---
+
+## 1. Group Collection (`groups`)
+Stores basic information about the group.
+
+| Field | Type | Description | Constraints |
+| :--- | :--- | :--- | :--- |
+| `id` | `string` | Unique identifier (Firestore ID) | Unique |
+| `name` | `string` | Group name (e.g., "Shift Buddies") | Required |
+| `icon` | `string` | Icon or profile image URL | Optional |
+| `ownerId` | `string` | User ID of the creator | Required |
+| `memberIds` | `string[]` | Array of User IDs | **Max 3 members** |
+| `createdAt` | `timestamp` | Time of creation | Required |
+| `updatedAt` | `timestamp` | Time of last update | Required |
+
+---
+
+## 2. Group Member Profile (Logic)
+Instead of a separate collection, we can fetch member details from the `users` collection using `memberIds`.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `string` | LINE User ID |
+| `displayName` | `string` | Display name for the shift owner |
+| `pictureUrl` | `string` | Profile image for the shift owner |
+
+---
+
+## 3. Shift Sharing Logic
+- Each [EventData](file:///c:/Users/boss_/OneDrive/%E0%B9%80%E0%B8%AD%E0%B8%81%E0%B8%AA%E0%B8%B2%E0%B8%A3/GitHub/calendar/src/types/event.types.ts#28-45) or [Shift](file:///c:/Users/boss_/OneDrive/%E0%B9%80%E0%B8%AD%E0%B8%81%E0%B8%AA%E0%B8%B2%E0%B8%A3/GitHub/calendar/src/types/event.types.ts#3-16) will still be stored under the individual user's `userId`.
+- When viewing a **Group**, the app will query `events` for all `userId`s listed in the group's `memberIds`.
+- The UI will display a unified or multi-row calendar showing:
+  - `Member A` (Color: Blue) -> Shift 1
+  - `Member B` (Color: Green) -> Shift 2
+  - `Member C` (Color: Orange) -> Shift 3
+
+---
+
+## Example JSON Structure
+```json
+{
+  "id": "group_123",
+  "name": "เวรวอร์ด 5",
+  "icon": "hospital-icon",
+  "ownerId": "user_A",
+  "memberIds": ["user_A", "user_B", "user_C"],
+  "createdAt": "2024-03-24T00:00:00Z",
+  "updatedAt": "2024-03-24T00:00:00Z"
+}
+```

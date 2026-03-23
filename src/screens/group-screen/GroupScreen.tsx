@@ -3,11 +3,44 @@
 import React from "react";
 import { Users, UserPlus, Search, ChevronRight, MessageSquare, Plus } from "lucide-react";
 
-export default function GroupScreen() {
-  const groups = [
-    { name: "ครอบครัว", members: 4, lastMsg: "วันนี้กินข้าวที่ไหนดี?", time: "10:20", id: "1" },
-    { name: "แก๊งค์เพื่อนมัธยม", members: 12, lastMsg: "ทริปหน้าไปไหนกันดี", time: "เมื่อวาน", id: "2" },
-    { name: "Project A", members: 8, lastMsg: "ส่งงานแล้วนะ", time: "08:15", id: "3" },
+import { Group } from "@/types/group.types";
+
+interface GroupScreenProps {
+  onGroupClick: (group: Group) => void;
+}
+
+export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
+  const groups: Group[] = [
+    { 
+      name: "ครอบครัว", 
+      members: [
+        { id: "user1", displayName: "Mom" },
+        { id: "user2", displayName: "Dad" },
+        { id: "user3", displayName: "Me" }
+      ], 
+      lastMsg: "วันนี้กินข้าวที่ไหนดี?", 
+      time: "10:20", 
+      id: "1" 
+    },
+    { 
+      name: "แก๊งค์เพื่อนมัธยม", 
+      members: [
+        { id: "user1", displayName: "Alice" },
+        { id: "user2", displayName: "Bob" }
+      ], 
+      lastMsg: "ทริปหน้าไปไหนกันดี", 
+      time: "เมื่อวาน", 
+      id: "2" 
+    },
+    { 
+      name: "Project A", 
+      members: [
+        { id: "user1", displayName: "John" }
+      ], 
+      lastMsg: "ส่งงานแล้วนะ", 
+      time: "08:15", 
+      id: "3" 
+    },
   ];
 
   return (
@@ -47,6 +80,7 @@ export default function GroupScreen() {
         {groups.map((group, i) => (
           <button
             key={group.id}
+            onClick={() => onGroupClick(group)}
             className={`w-full flex items-center justify-between px-5 py-5 active:bg-slate-50 dark:active:bg-slate-700/50 transition-colors ${
               i < groups.length - 1 ? "border-b border-slate-100/50 dark:border-slate-700/50" : ""
             }`}
@@ -62,7 +96,7 @@ export default function GroupScreen() {
                 <p className="text-slate-800 dark:text-slate-200 font-bold text-base tracking-tight">{group.name}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <Users size={10} /> {group.members} สมาชิก
+                    <Users size={10} /> {group.members.length} สมาชิก
                   </span>
                   <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
                   <span className="text-[10px] text-slate-400 truncate max-w-[120px]">

@@ -23,12 +23,14 @@ const ICON_MAP: Record<string, any> = {
 import SettingScreen from "@/screens/setting-screen/SettingScreen";
 import ResultScreen from "@/screens/result-screen/ResultScreen";
 import GroupScreen from "@/screens/group-screen/GroupScreen";
+import GroupCalendarScreen from "@/screens/group-screen/components/GroupCalendarScreen";
 import EventModal from "./components/EventModal";
 import MonthPickerModal from "./components/MonthPickerModal";
 import NavBar from "./components/NavBar";
 import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
 import EventSummaryModal from "./components/EventSummaryModal";
+import { Group } from "@/types/group.types";
 
 const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
@@ -146,6 +148,8 @@ const HomeScreen = () => {
         shifts,
     } = useCalendarController(userId);
 
+    const [selectedGroup, setSelectedGroup] = React.useState<Group | null>(null);
+
     if (liffLoading) {
         return (
             <div className="flex items-center justify-center h-[100dvh] bg-[#f8fafc] dark:bg-[#0f172a]">
@@ -161,7 +165,13 @@ const HomeScreen = () => {
             case "result":
                 return <ResultScreen />;
             case "group":
-                return <GroupScreen />;
+                if (selectedGroup) {
+                    return <GroupCalendarScreen 
+                        group={selectedGroup} 
+                        onBack={() => setSelectedGroup(null)} 
+                    />;
+                }
+                return <GroupScreen onGroupClick={setSelectedGroup} />;
             case "home":
             default:
                 return (
@@ -256,8 +266,11 @@ const HomeScreen = () => {
             {renderPageContent()}
 
             {/* Navigation */}
-            <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isModalOpen ? "translate-y-24 opacity-0 h-0 overflow-hidden" : "translate-y-0 opacity-100"}`}>
-                <NavBar activeTab={activeTab} onTabChange={setActiveTab} />
+            <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isModalOpen || selectedGroup ? "translate-y-24 opacity-0 h-0 overflow-hidden" : "translate-y-0 opacity-100"}`}>
+                <NavBar activeTab={activeTab} onTabChange={(tab) => {
+                    setActiveTab(tab);
+                    if (tab !== "group") setSelectedGroup(null);
+                }} />
             </div>
 
             <EventSummaryModal
