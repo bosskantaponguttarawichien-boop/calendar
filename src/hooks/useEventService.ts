@@ -54,8 +54,20 @@ export function useEventService() {
     const addOrUpdateEventByDate = useCallback((userId: string, dateStr: string, data: any) => 
         upsertByDate(userId, dateStr, data), [upsertByDate]);
 
-    const subscribeToEvents = useCallback((userId: string, onUpdate: (events: EventData[]) => void) => {
-        const qEvents = query(collection(db, "events"), where("userId", "==", userId));
+    const subscribeToEvents = useCallback((
+        userId: string, 
+        onUpdate: (events: EventData[]) => void,
+        startDate?: Date,
+        endDate?: Date
+    ) => {
+        let qEvents = query(collection(db, "events"), where("userId", "==", userId));
+        
+        if (startDate) {
+            qEvents = query(qEvents, where("start", ">=", Timestamp.fromDate(startDate)));
+        }
+        if (endDate) {
+            qEvents = query(qEvents, where("start", "<=", Timestamp.fromDate(endDate)));
+        }
         
         const mapDoc = (doc: any) => {
             const data = doc.data();

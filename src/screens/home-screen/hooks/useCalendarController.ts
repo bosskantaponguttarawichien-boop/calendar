@@ -34,6 +34,8 @@ export function useCalendarController(userId: string | null) {
     const [isPaginating, setIsPaginating] = useState(false);
     const [animationClass, setAnimationClass] = useState("");
     const [activeTab, setActiveTab] = useState("home");
+    const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
     const [pendingEvents, setPendingEvents] = useState<Record<string, string | number>>(() => {
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("pendingEvents");
@@ -65,9 +67,9 @@ export function useCalendarController(userId: string | null) {
         if (!userId) return;
         const unsubscribe = subscribeToEvents(userId, (eventData) => {
             setEvents(eventData);
-        });
+        }, startDate, endDate);
         return () => unsubscribe();
-    }, [userId, subscribeToEvents]);
+    }, [userId, subscribeToEvents, startDate, endDate]);
 
     const updateTitle = useCallback(() => {
         if (calendarRef.current) {
@@ -77,6 +79,11 @@ export function useCalendarController(userId: string | null) {
             const year = date.getFullYear() + 543;
             setTitle(`${month} ${year}`);
             setPickerDate((prev) => (prev.getTime() !== date.getTime() ? date : prev));
+            
+            // Update visible range for data optimization
+            const { activeStart, activeEnd } = api.view;
+            setStartDate(activeStart);
+            setEndDate(activeEnd);
         }
     }, []);
 
