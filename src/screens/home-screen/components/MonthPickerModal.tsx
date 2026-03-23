@@ -21,16 +21,15 @@ export default function MonthPickerModal({ pickerDate, onClose, onYearChange, on
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-6 pb-20 pointer-events-none"
         >
+            {/* Backdrop Overlay */}
+            <div
+                className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] pointer-events-auto"
+                onClick={onClose}
+            />
             <div
                 className="bg-white dark:bg-slate-900 rounded-[32px] w-full max-w-[280px] shadow-2xl p-6 flex flex-col items-center pointer-events-auto relative"
                 onClick={(e) => e.stopPropagation()}
             >
-                <button
-                    onClick={onClose}
-                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
-                >
-                    <X size={20} strokeWidth={2.5} />
-                </button>
                 <div className="flex items-center justify-between w-full mb-4 px-2">
                     <button onClick={() => onYearChange(-1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                         <ChevronLeft size={20} className="text-slate-800 dark:text-slate-200" />

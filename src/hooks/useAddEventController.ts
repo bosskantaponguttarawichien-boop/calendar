@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useEventService } from "@/hooks/useEventService";
-import { format, parseISO, addDays } from "date-fns";
+import { useShiftService } from "@/hooks/useShiftService";
 import { useRouter } from "next/navigation";
 
 interface UseAddEventControllerProps {
     dateStr: string | null;
     userId: string;
-    editId?: string | null;
+    editUserShiftId?: string | null; // ID of an existing custom shift to update
+    mainShiftId?: string | null;      // ID of a main shift we are overriding
     initialTitle?: string | null;
     initialIcon?: string | null;
     initialColor?: string | null;
@@ -17,12 +17,14 @@ interface UseAddEventControllerProps {
 }
 
 export function useAddEventController({ 
-    dateStr, userId, editId, 
+    dateStr, userId,
+    editUserShiftId, mainShiftId,
     initialTitle, initialIcon, initialColor, 
     initialStartTime, initialEndTime 
 }: UseAddEventControllerProps) {
     const router = useRouter();
-    const { addOrUpdateEventByDate } = useEventService();
+    const { addShift, updateShift } = useShiftService();
+    // ... basic state ...
     const [title, setTitle] = useState(initialTitle || "");
     const [selectedIcon, setSelectedIcon] = useState(initialIcon || "Sun");
     const [selectedColor, setSelectedColor] = useState(initialColor || "#334155");
@@ -36,32 +38,25 @@ export function useAddEventController({
         setLoading(true);
 
         try {
-            const eventData: any = {
-                userId,
+            const shiftData = {
                 title: title.trim(),
                 icon: selectedIcon,
                 color: selectedColor,
                 startTime: startTime || null,
                 endTime: endTime || null,
+                mainShiftId: mainShiftId || null,
             };
-            
 
-            if (editId) {
-                // For now, if editing a custom event, we'll just update it in place as a regular event
-                if (dateStr) {
-                    await addOrUpdateEventByDate(userId, dateStr, eventData);
-                }
-                router.back();
+            if (editUserShiftId) {
+                await updateShift(editUserShiftId, shiftData);
             } else {
-                if (dateStr) {
-                    const date = parseISO(dateStr);
-                    eventData.start = date;
-                    eventData.end = date;
-                    await addOrUpdateEventByDate(userId, dateStr, eventData);
-                    router.push(`/?date=${dateStr}&open=true`);
-                } else {
-                    router.back();
-                }
+                await addShift(userId, shiftData);
+            }
+
+            if (dateStr) {
+                router.push(`/?date=${dateStr}&open=true`);
+            } else {
+                router.back();
             }
         } catch (error) {
             console.error(error);

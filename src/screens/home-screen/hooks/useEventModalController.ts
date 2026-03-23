@@ -5,7 +5,6 @@ import { useEventService } from "@/hooks/useEventService";
 import { format, parseISO, addDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
-import { CATEGORIES } from "@/lib/constants";
 
 interface UseEventModalControllerProps {
     selectedDate: string | null;
@@ -15,6 +14,7 @@ interface UseEventModalControllerProps {
     setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
     setSelectedDate: (date: string | null) => void;
     onClose: () => void;
+    shifts: any[];
 }
 
 export function useEventModalController({
@@ -25,6 +25,7 @@ export function useEventModalController({
     setPendingEvents,
     setSelectedDate,
     onClose,
+    shifts,
 }: UseEventModalControllerProps) {
     const router = useRouter();
     const { saveBatchEvents } = useEventService();
@@ -82,7 +83,7 @@ export function useEventModalController({
 
         setLoading(true);
         try {
-            await saveBatchEvents(userId, pendingEvents, events);
+            await saveBatchEvents(userId, pendingEvents, events, shifts);
             setPendingEvents({});
             onClose();
         } catch (error) {

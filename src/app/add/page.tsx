@@ -18,6 +18,7 @@ function AddCustomContent() {
     const searchParams = useSearchParams();
     const dateStr = searchParams.get("date");
     const editId = searchParams.get("editId");
+    const isMainShift = searchParams.get("isMainShift") === "true";
     
     const initialTitle = searchParams.get("title");
     const initialIcon = searchParams.get("icon");
@@ -36,7 +37,9 @@ function AddCustomContent() {
         handleSave,
     } = useAddEventController({ 
         dateStr, userId: userId || "local-user", 
-        editId, initialTitle, initialIcon, initialColor, initialStartTime, initialEndTime 
+        editUserShiftId: isMainShift ? null : editId,
+        mainShiftId: isMainShift ? editId : null,
+        initialTitle, initialIcon, initialColor, initialStartTime, initialEndTime 
     });
 
     const handleToggleTime = (enabled: boolean) => {

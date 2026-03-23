@@ -1,11 +1,24 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, HelpCircle, Sun, CloudSun, Moon, SunMoon, MoonStar } from "lucide-react";
 import { format } from "date-fns";
+
+const ICON_MAP: Record<string, any> = {
+    morning: Sun,
+    afternoon: CloudSun,
+    night: Moon,
+    allday: SunMoon,
+    nightafternoon: MoonStar,
+    Sun: Sun,
+    CloudSun: CloudSun,
+    Moon: Moon,
+    SunMoon: SunMoon,
+    MoonStar: MoonStar,
+};
 
 import SettingScreen from "@/screens/setting-screen/SettingScreen";
 import ResultScreen from "@/screens/result-screen/ResultScreen";
@@ -13,7 +26,6 @@ import GroupScreen from "@/screens/group-screen/GroupScreen";
 import EventModal from "./components/EventModal";
 import MonthPickerModal from "./components/MonthPickerModal";
 import NavBar from "./components/NavBar";
-import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
 import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
 import EventSummaryModal from "./components/EventSummaryModal";
@@ -45,42 +57,36 @@ const DayCellContent = React.memo(({
     arg,
     groupedEvents,
     pendingEvents,
-    isModalOpen
+    isModalOpen,
+    shifts
 }: {
     arg: any;
     groupedEvents: Record<string, any[]>;
     pendingEvents: Record<string, string | number>;
     isModalOpen: boolean;
+    shifts: any[];
 }) => {
     const dateStr = format(arg.date, "yyyy-MM-dd");
     const dayEvents = groupedEvents[dateStr] || [];
 
     const pendingCat = pendingEvents[dateStr];
     const isDeleted = pendingCat === "delete";
-
-    // An event is custom if it's explicitly a numeric shift template OR has a custom title (from /add)
     const hasExistingEvent = dayEvents.length > 0;
-    const isCustom = (typeof pendingCat === "string" && pendingCat.startsWith("custom:")) ||
-        (hasExistingEvent && (typeof dayEvents[0].shiftId === "number" || !!dayEvents[0].title) && !pendingCat);
 
-    const actualCatId = isCustom ? "custom" : pendingCat;
-
-    const activeCatId = (pendingCat && !isDeleted) ? actualCatId : (hasExistingEvent ? dayEvents[0].shiftId : null);
-    const category = CATEGORIES.find(c => c.id === activeCatId);
-
-    // Virtual category for any shift that isn't in the standard list (numeric or one-off)
-    const customCategory = (hasExistingEvent && !category) ? {
-        icon: CATEGORIES.find(c => c.id === dayEvents[0].icon)?.icon || CATEGORIES[0].icon,
-        label: dayEvents[0].title
-    } : null;
-
-    const displayCategory = category || customCategory;
+    const activeCatId = (pendingCat && !isDeleted) ? pendingCat : (hasExistingEvent ? dayEvents[0].shiftId : null);
+    const displayCategory = shifts.find(s => s.id === activeCatId);
 
     const color = isDeleted
         ? ""
         : (pendingCat && pendingCat !== "delete")
-            ? (CATEGORY_COLORS[actualCatId] || "#334155")
-            : (hasExistingEvent ? (dayEvents[0].color || (dayEvents[0].shiftId ? CATEGORY_COLORS[dayEvents[0].shiftId as string] : null) || "#334155") : "");
+            ? (displayCategory?.color || "#334155")
+            : (hasExistingEvent ? (dayEvents[0].color || displayCategory?.color || "#334155") : "");
+
+    const IconComponent = useMemo(() => {
+        if (!displayCategory) return null;
+        if (typeof displayCategory.icon !== 'string') return displayCategory.icon;
+        return ICON_MAP[displayCategory.icon] || HelpCircle;
+    }, [displayCategory]);
 
     return (
         <div
@@ -89,16 +95,14 @@ const DayCellContent = React.memo(({
         >
             <div className="pill-date-circle shrink-0 z-10">{arg.dayNumberText}</div>
 
-            {displayCategory && !isDeleted && (
+            {displayCategory && IconComponent && !isDeleted && (
                 <div className="flex flex-col items-center justify-center flex-grow w-full animate-in zoom-in-50 duration-300 z-10">
-                    <displayCategory.icon
-                        size={!isModalOpen ? 16 : 14}
-                        className={`text-white transition-all ${!isModalOpen ? "mb-0.5" : ""}`}
-                        strokeWidth={2.5}
-                    />
+                    <div className="text-white">
+                        <IconComponent size={!isModalOpen ? 16 : 14} strokeWidth={2.5} />
+                    </div>
                     {!isModalOpen && (
                         <span className="text-[8px] font-black text-white uppercase tracking-tighter text-center leading-[1] px-0.5">
-                            {displayCategory.label}
+                            {displayCategory.title || displayCategory.label}
                         </span>
                     )}
                 </div>
@@ -125,7 +129,6 @@ const HomeScreen = () => {
         isMonthPickerOpen,
         setIsMonthPickerOpen,
         pickerDate,
-        isPaginating,
         animationClass,
         activeTab,
         setActiveTab,
@@ -140,6 +143,7 @@ const HomeScreen = () => {
         handleYearChange,
         handlePickerToday,
         updateTitle,
+        shifts,
     } = useCalendarController(userId);
 
     if (liffLoading) {
@@ -205,6 +209,7 @@ const HomeScreen = () => {
                                         groupedEvents={groupedEvents}
                                         pendingEvents={pendingEvents}
                                         isModalOpen={isModalOpen}
+                                        shifts={shifts}
                                     />
                                 )}
                             />
@@ -276,6 +281,7 @@ const HomeScreen = () => {
                 events={events}
                 pendingEvents={pendingEvents}
                 setPendingEvents={setPendingEvents}
+                shifts={shifts}
             />
 
             {isMonthPickerOpen && (

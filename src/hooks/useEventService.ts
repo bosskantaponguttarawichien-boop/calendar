@@ -16,9 +16,14 @@ import {
 } from "firebase/firestore";
 import { format, parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
-import { CATEGORIES, CATEGORY_COLORS } from "@/lib/constants";
 
 export function useEventService() {
+    const cleanData = (data: any) => {
+        return Object.fromEntries(
+            Object.entries(data).filter(([, v]) => v !== undefined)
+        ) as any;
+    };
+
     const upsertByDate = useCallback(async (userId: string, dateStr: string, data: any) => {
         try {
             const q = query(collection(db, "events"), where("userId", "==", userId));
@@ -31,18 +36,18 @@ export function useEventService() {
             });
 
             if (existingDoc) {
-                await updateDoc(doc(db, "events", existingDoc.id), {
+                await updateDoc(doc(db, "events", existingDoc.id), cleanData({
                     ...data,
                     updatedAt: new Date()
-                });
+                }));
                 return { id: existingDoc.id, type: 'update' };
             } else {
-                const docRef = await addDoc(collection(db, "events"), {
+                const docRef = await addDoc(collection(db, "events"), cleanData({
                     ...data,
                     userId,
                     createdAt: new Date(),
                     updatedAt: new Date()
-                });
+                }));
                 return { id: docRef.id, type: 'create' };
             }
         } catch (error) {
@@ -76,14 +81,13 @@ export function useEventService() {
                 id,
                 ...data,
                 collectionName: "events",
-                shiftId: data.shiftId ?? data.category ?? id,
-                category: data.category ?? data.shiftId ?? id,
+                shiftId: data.shiftId || data.category || id,
                 start: data.start instanceof Timestamp ? data.start.toDate() : data.start,
                 end: data.end instanceof Timestamp ? data.end.toDate() : data.end,
+                startTime: data.startTime || null,
+                endTime: data.endTime || null,
                 createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
                 updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
-                icon: data.icon || "HelpCircle",
-                color: data.color || (data.category ? CATEGORY_COLORS[data.category] : "#334155")
             };
         };
 
@@ -99,7 +103,8 @@ export function useEventService() {
     const saveBatchEvents = useCallback(async (
         userId: string, 
         pendingEvents: Record<string, string | number>, 
-        currentEvents: EventData[]
+        currentEvents: EventData[],
+        shifts: any[]
     ) => {
         const batch = writeBatch(db);
         const datesToSave = Object.keys(pendingEvents);
@@ -118,17 +123,19 @@ export function useEventService() {
                 continue;
             }
 
-            const category = CATEGORIES.find(c => c.id === categoryId);
+            const shift = shifts.find(s => s.id === categoryId);
+            const startTime = shift?.startTime || null;
+            const endTime = shift?.endTime || null;
+
             const eventPayload: any = {
                 userId,
                 updatedAt: new Date(),
                 start: parseISO(date),
                 end: parseISO(date),
-                title: category?.label || "กิจกรรม",
+                startTime,
+                endTime,
                 shiftId: categoryId as string,
-                category: categoryId as string,
-                icon: category?.id || "morning",
-                color: category?.color || "#334155",
+                title: "กิจกรรม",
             };
 
             if (existingEvent) {

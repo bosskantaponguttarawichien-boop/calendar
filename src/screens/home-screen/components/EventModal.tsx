@@ -16,6 +16,7 @@ interface EventModalProps {
     events: EventData[];
     pendingEvents: Record<string, string | number>;
     setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
+    shifts: any[];
 }
 
 const ICON_MAP: Record<string, any> = {
@@ -31,7 +32,7 @@ const ICON_MAP: Record<string, any> = {
     MoonStar: MoonStar,
 };
 
-const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, events, pendingEvents, setPendingEvents }: EventModalProps) => {
+const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, events, pendingEvents, setPendingEvents, shifts }: EventModalProps) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [showModal, setShowModal] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -42,7 +43,8 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
         handleSave,
         handleDelete,
         handleIconClick,
-    } = useEventModalController({ selectedDate, userId, events, pendingEvents, setPendingEvents, setSelectedDate, onClose });
+        handleCancel,
+    } = useEventModalController({ selectedDate, userId, events, pendingEvents, setPendingEvents, setSelectedDate, onClose, shifts });
 
     // Extract unique custom shifts (templates or one-offs)
     const customShifts = useMemo(() => {
@@ -63,20 +65,18 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
     }, [events]);
 
     const ALL_ITEMS = useMemo(() => {
-        const standardCats = CATEGORIES.filter(c => c.id !== "custom");
         const plusCat = CATEGORIES.find(c => c.id === "custom");
 
         return [
-            ...standardCats.map(c => ({ id: c.id, label: c.label, icon: c.icon, color: c.color })),
-            ...customShifts.map(s => ({
-                id: s.shiftId,
-                label: s.title || "เวรพิเศษ",
-                icon: (s.icon && ICON_MAP[s.icon]) || (typeof s.shiftId === 'string' && ICON_MAP[s.shiftId]) || HelpCircle,
+            ...shifts.map(s => ({
+                id: s.id,
+                label: s.title || s.label,
+                icon: (typeof s.icon === 'string' ? (ICON_MAP[s.icon] || HelpCircle) : (s.icon || HelpCircle)),
                 color: s.color || "#334155"
             })),
             ...(plusCat ? [{ id: plusCat.id, label: plusCat.label, icon: plusCat.icon, color: plusCat.color }] : [])
         ];
-    }, [customShifts]);
+    }, [shifts]);
 
     useEffect(() => {
         console.log("Current UserID in Modal:", userId);
@@ -133,11 +133,10 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
 
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
-
             <div className={`bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.4)] p-4 pt-5 pb-5 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
                 <div className="relative flex flex-col items-center">
                     <button
-                        onClick={onClose}
+                        onClick={handleCancel}
                         className="absolute right-0 top-0 pr-2 pt-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                     >
                         <X size={20} strokeWidth={2.5} />

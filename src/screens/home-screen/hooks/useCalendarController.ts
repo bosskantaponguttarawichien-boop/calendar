@@ -7,6 +7,7 @@ import { format, setMonth, setYear } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import { EventData } from "@/types/event.types";
 import { THAI_MONTHS } from "@/lib/constants";
+import { useShiftController } from "@/hooks/useShiftController";
 
 const SCROLL_DEBOUNCE = 200;
 const TRANSITION_DELAY = 150;
@@ -15,6 +16,7 @@ export function useCalendarController(userId: string | null) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { subscribeToEvents } = useEventService();
+    const { shifts, loading: shiftsLoading } = useShiftController(userId || undefined);
 
     const calendarRef = useRef<FullCalendar>(null);
     const calendarWrapperRef = useRef<HTMLDivElement>(null);
@@ -56,11 +58,15 @@ export function useCalendarController(userId: string | null) {
         const dateParam = searchParams.get("date");
         const openParam = searchParams.get("open");
         if (dateParam && openParam === "true") {
-            setSelectedDate(dateParam);
-            setIsModalOpen(true);
-            router.replace("/", { scroll: false });
+            // Using a slight delay to avoid synchronous state update warning
+            const timer = setTimeout(() => {
+                setSelectedDate(dateParam);
+                setIsModalOpen(true);
+                router.replace("/", { scroll: false });
+            }, 0);
+            return () => clearTimeout(timer);
         }
-    }, [searchParams, router]);
+    }, [searchParams, router, setSelectedDate, setIsModalOpen]);
 
     // Firestore real-time listener
     useEffect(() => {
@@ -223,6 +229,8 @@ export function useCalendarController(userId: string | null) {
         pendingEvents,
         setPendingEvents,
         updateTitle,
+        shifts,
+        shiftsLoading,
         handleDateClick,
         handleEventClick,
         handleWheel,
