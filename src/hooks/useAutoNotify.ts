@@ -29,10 +29,12 @@ export function useAutoNotify(userId: string | null) {
 
       if (!settings || !settings.autoNotify || hasCheckedRef.current) return;
       
+      /* 
       if (settings.lastNotifyDate === todayStr) {
         hasCheckedRef.current = true;
         return;
       }
+      */
 
       // 1. Handle Mock Mode (Localhost)
       if (isLocal) {
@@ -65,91 +67,18 @@ export function useAutoNotify(userId: string | null) {
       }
 
       try {
+        const messageText = `📅 แจ้งเตือนเวรวันนี้: ${shift.title}\n⏰ เวลา: ${shift.startTime || "00:00"} - ${shift.endTime || "00:00"}`;
+        
         await liff.sendMessages([
           {
-            type: "flex",
-            altText: `วันนี้มีเวร: ${shift.title}`,
-            contents: {
-              type: "bubble",
-              size: "mega",
-              header: {
-                type: "box",
-                layout: "vertical",
-                contents: [
-                  {
-                    type: "text",
-                    text: "แจ้งเตือนเวรวันนี้",
-                    weight: "bold",
-                    color: "#ffffff",
-                    size: "sm"
-                  }
-                ],
-                backgroundColor: shift.color || "#334155"
-              },
-              body: {
-                type: "box",
-                layout: "vertical",
-                contents: [
-                  {
-                    type: "text",
-                    text: shift.title,
-                    weight: "bold",
-                    size: "xxl",
-                    margin: "md"
-                  },
-                  {
-                    type: "box",
-                    layout: "vertical",
-                    margin: "lg",
-                    spacing: "sm",
-                    contents: [
-                      {
-                        type: "box",
-                        layout: "baseline",
-                        spacing: "sm",
-                        contents: [
-                          {
-                            type: "text",
-                            text: "เวลา",
-                            color: "#aaaaaa",
-                            size: "sm",
-                            flex: 1
-                          },
-                          {
-                            type: "text",
-                            text: `${shift.startTime || "00:00"} - ${shift.endTime || "00:00"}`,
-                            wrap: true,
-                            color: "#666666",
-                            size: "sm",
-                            flex: 5
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              footer: {
-                type: "box",
-                layout: "vertical",
-                spacing: "sm",
-                contents: [
-                  {
-                    type: "text",
-                    text: "ส่งโดย Calendar App",
-                    size: "xs",
-                    color: "#aaaaaa",
-                    align: "center"
-                  }
-                ]
-              }
-            }
+            type: "text",
+            text: messageText
           }
         ]);
 
         await updateUserSettings(userId, { lastNotifyDate: todayStr });
         hasCheckedRef.current = true;
-        alert("✅ ส่งข้อความแจ้งเตือนเวรเรียบร้อยแล้ว!");
+        alert(`✅ ส่งข้อความเรียบร้อย! (Context: ${context.type})`);
       } catch (error) {
         console.error("Failed to send auto-notification", error);
         alert("❌ ไม่สามารถส่งข้อความได้: " + (error instanceof Error ? error.message : "โปรดตรวจสอบ Scopes chat_message.write"));
