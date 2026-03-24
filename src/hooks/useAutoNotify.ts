@@ -52,14 +52,16 @@ export function useAutoNotify(userId: string | null) {
 
     // 1. Mock Mode (Immediate)
     if (isLocal) {
-        console.log("[AutoNotify] Mock Mode Executing...");
         const now = getGregorianDate();
         const todayStr = format(now, "yyyy-MM-dd");
         
         if (!settings || !settings.autoNotify) return;
+        if (settings.lastNotifyDate === todayStr) {
+          hasCheckedRef.current = true;
+          return;
+        }
 
-        alert(`[MOCK] ตรวจพบเวรวันนี้ (จำลอง):\nเวรเช้า (Mock)\nเวลา: 08:00 - 16:00`);
-        
+        console.log("[AutoNotify] Mock mode: Match found! (Sending would happen here)");
         await updateUserSettings(userId, { lastNotifyDate: todayStr });
         hasCheckedRef.current = true;
         return;
@@ -75,12 +77,10 @@ export function useAutoNotify(userId: string | null) {
 
     if (!settings.autoNotify) return;
 
-    /* 
     if (settings.lastNotifyDate === todayStr) {
       hasCheckedRef.current = true;
       return;
     }
-    */
 
     const todayEvent = events.find(e => {
       const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
@@ -108,25 +108,93 @@ export function useAutoNotify(userId: string | null) {
       return;
     }
 
-    // Manual Confirmation
-    const msg = `วันนี้คุณมีเวร "${shift.title}" (${shift.startTime || '00:00'} - ${shift.endTime || '00:00'})\nต้องการส่งแจ้งเตือนลงแชทตอนนี้เลยไหมครับ?`;
-    if (!window.confirm(msg)) {
-      hasCheckedRef.current = true;
-      return;
-    }
-
     try {
-      await liff.sendMessages([{
-        type: "text",
-        text: `📅 แจ้งเตือนเวรวันนี้: ${shift.title}\n⏰ เวลา: ${shift.startTime || "00:00"} - ${shift.endTime || "00:00"}`
-      }]);
+      await liff.sendMessages([
+        {
+          type: "flex",
+          altText: `วันนี้มีเวร: ${shift.title}`,
+          contents: {
+            type: "bubble",
+            size: "mega",
+            header: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "text",
+                  text: "แจ้งเตือนเวรวันนี้",
+                  weight: "bold",
+                  color: "#ffffff",
+                  size: "sm"
+                }
+              ],
+              backgroundColor: shift.color || "#334155"
+            },
+            body: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "text",
+                  text: shift.title,
+                  weight: "bold",
+                  size: "xxl",
+                  margin: "md"
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "lg",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "เวลา",
+                          color: "#aaaaaa",
+                          size: "sm",
+                          flex: 1
+                        },
+                        {
+                          type: "text",
+                          text: `${shift.startTime || "00:00"} - ${shift.endTime || "00:00"}`,
+                          wrap: true,
+                          color: "#666666",
+                          size: "sm",
+                          flex: 5
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            footer: {
+              type: "box",
+              layout: "vertical",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "text",
+                  text: "ส่งโดย Calendar App",
+                  size: "xs",
+                  color: "#aaaaaa",
+                  align: "center"
+                }
+              ]
+            }
+          }
+        }
+      ]);
 
       await updateUserSettings(userId, { lastNotifyDate: todayStr });
       hasCheckedRef.current = true;
-      alert("✅ ส่งข้อความเรียบร้อย!");
     } catch (error) {
       console.error("[AutoNotify] Error", error);
-      alert("❌ ส่งไม่สำเร็จ");
     }
   }, [userId, settings, events, shifts, shiftsLoading, getGregorianDate, updateUserSettings]);
 
