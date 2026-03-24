@@ -56,10 +56,12 @@ export function useAutoNotify(userId: string | null) {
         const todayStr = format(now, "yyyy-MM-dd");
         
         if (!settings || !settings.autoNotify) return;
-        if (settings.lastNotifyDate === todayStr) {
-          hasCheckedRef.current = true;
-          return;
-        }
+        /* 
+    if (settings.lastNotifyDate === todayStr) {
+      hasCheckedRef.current = true;
+      return;
+    }
+    */
 
         console.log("[AutoNotify] Mock mode: Match found! (Sending would happen here)");
         await updateUserSettings(userId, { lastNotifyDate: todayStr });
@@ -77,10 +79,12 @@ export function useAutoNotify(userId: string | null) {
 
     if (!settings.autoNotify) return;
 
+    /* 
     if (settings.lastNotifyDate === todayStr) {
       hasCheckedRef.current = true;
       return;
     }
+    */
 
     const todayEvent = events.find(e => {
       const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
