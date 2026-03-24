@@ -2,18 +2,17 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import liff from "@/lib/liff";
 import { useUserSettingsService, UserSettings } from "./useUserSettingsService";
 import { useEventService } from "./useEventService";
-import { useShiftService } from "./useShiftService";
+import { useShiftController } from "./useShiftController";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { EventData, Shift } from "@/types/event.types";
 
 export function useAutoNotify(userId: string | null) {
   const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
   const { subscribeToEvents } = useEventService();
-  const { subscribeToShifts } = useShiftService();
+  const { shifts, loading: shiftsLoading } = useShiftController(userId || undefined);
   
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [events, setEvents] = useState<EventData[]>([]);
-  const [shifts, setShifts] = useState<Shift[]>([]);
   const hasCheckedRef = useRef(false);
 
   // Helper: Force Gregorian year
@@ -27,30 +26,27 @@ export function useAutoNotify(userId: string | null) {
     return d;
   }, []);
 
-  // Subscribe to all data
+  // Subscribe to settings and events
   useEffect(() => {
     if (!userId) return;
 
     const unsubSettings = subscribeToUserSettings(userId, setSettings);
     
     const now = getGregorianDate();
-    const unsubEvents = subscribeToEvents(userId, setEvents, startOfMonth(now), endOfMonth(now));
-    const unsubShifts = subscribeToShifts(userId, setShifts);
+    const unsubEvents = subscribeToEvents(userId, (e) => {
+        setEvents(e);
+    }, startOfMonth(now), endOfMonth(now));
 
     return () => {
       unsubSettings();
       unsubEvents();
-      unsubShifts();
     };
-  }, [userId, subscribeToUserSettings, subscribeToEvents, subscribeToShifts, getGregorianDate]);
+  }, [userId, subscribeToUserSettings, subscribeToEvents, getGregorianDate]);
 
   // Main Logic
   const checkAndNotify = useCallback(async () => {
     const isLocal = typeof window !== "undefined" && 
         (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
-    // 🚨 AGGRESSIVE TRACE (Ultimate)
-    alert(`[SYSTEM TRACE]\nUser: ${userId}\nLocal: ${isLocal}\nSettings: ${!!settings}\nShifts: ${shifts.length}\nEvents: ${events.length}`);
 
     if (!userId || hasCheckedRef.current) return;
 
@@ -60,7 +56,6 @@ export function useAutoNotify(userId: string | null) {
         const now = getGregorianDate();
         const todayStr = format(now, "yyyy-MM-dd");
         
-        // Only run if settings are loaded to check if it's even enabled
         if (!settings || !settings.autoNotify) return;
 
         alert(`[MOCK] ตรวจพบเวรวันนี้ (จำลอง):\nเวรเช้า (Mock)\nเวลา: 08:00 - 16:00`);
@@ -71,27 +66,23 @@ export function useAutoNotify(userId: string | null) {
     }
 
     // 2. Real Logic (Wait for data)
-    if (!settings || shifts.length === 0 || events.length === 0) {
-        // Log to console but don't show alert yet (it might just be loading)
-        console.log("[AutoNotify] Waiting for data...", { settings: !!settings, shifts: shifts.length, events: events.length });
+    if (!settings || shiftsLoading || shifts.length === 0 || events.length === 0) {
         return;
     }
 
     const now = getGregorianDate();
     const todayStr = format(now, "yyyy-MM-dd");
 
-    // TRACE ALERT (Temporary for Debug)
+    // 🚨 AGGRESSIVE TRACE (Place here to see data once it's non-zero)
+    /*
     const eventDates = events.map(e => {
         const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
         return format(getGregorianDate(d), "yyyy-MM-dd");
     });
-    
-    alert(`[TRACE]\nToday: ${todayStr}\nAuto: ${settings.autoNotify}\nEvents: ${events.length}\nAll Dates: ${eventDates.slice(0, 5).join(", ")}`);
+    alert(`[SYSTEM TRACE]\nUser: ${userId}\nToday: ${todayStr}\nAuto: ${settings.autoNotify}\nShifts: ${shifts.length}\nEvents: ${events.length}\nSample: ${eventDates[0]}`);
+    */
 
-    if (!settings.autoNotify) {
-        console.log("[AutoNotify] Disabled in settings.");
-        return;
-    }
+    if (!settings.autoNotify) return;
 
     /* 
     if (settings.lastNotifyDate === todayStr) {
@@ -102,27 +93,27 @@ export function useAutoNotify(userId: string | null) {
 
     const todayEvent = events.find(e => {
       const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
-      return format(getGregorianDate(d), "yyyy-MM-dd") === todayStr;
+      const eventDateStr = format(getGregorianDate(d), "yyyy-MM-dd");
+      return eventDateStr === todayStr;
     });
 
     if (!todayEvent) {
-      // Data is ready but no match found
       hasCheckedRef.current = true;
-      console.log("[AutoNotify] Data ready, but no event found for today:", todayStr);
+      console.log("[AutoNotify] Match missed for today:", todayStr);
       return;
     }
 
     const shift = shifts.find(s => s.id === todayEvent.shiftId);
     if (!shift) {
       hasCheckedRef.current = true;
-      console.log("[AutoNotify] Event found, but shift config is missing.");
+      console.log("[AutoNotify] Found event but no matching shift object for ID:", todayEvent.shiftId);
       return;
     }
 
     const context = liff.getContext();
     if (!context || context.type === 'none') {
       hasCheckedRef.current = true;
-      console.log("[AutoNotify] Not in a chat context. Context type:", context?.type);
+      console.log("[AutoNotify] No context, context.type:", context?.type);
       return;
     }
 
@@ -146,7 +137,7 @@ export function useAutoNotify(userId: string | null) {
       console.error("[AutoNotify] Error", error);
       alert("❌ ส่งไม่สำเร็จ");
     }
-  }, [userId, settings, events, shifts, getGregorianDate, updateUserSettings]);
+  }, [userId, settings, events, shifts, shiftsLoading, getGregorianDate, updateUserSettings]);
 
   useEffect(() => {
     checkAndNotify();
