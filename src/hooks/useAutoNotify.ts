@@ -23,65 +23,22 @@ export function useAutoNotify(userId: string | null) {
     let shifts: Shift[] = [];
 
     const checkAndNotify = async () => {
-      const todayStr = format(new Date(), "yyyy-MM-dd");
-      const isLocal = typeof window !== "undefined" && 
-          (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
-      if (!settings || !settings.autoNotify || hasCheckedRef.current) return;
-      
-      /* 
-      if (settings.lastNotifyDate === todayStr) {
-        hasCheckedRef.current = true;
-        return;
-      }
-      */
-
-      // 1. Handle Mock Mode (Localhost)
-      if (isLocal) {
-          console.log("[AutoNotify] Mock Mode: Bypassing real data for localhost.");
-          const mockShift = { title: "เวรเช้า (Mock)", startTime: "08:00", endTime: "16:00" };
-          alert(`[MOCK] ตรวจพบเวรวันนี้ (จำลอง):\n${mockShift.title}\nเวลา: ${mockShift.startTime} - ${mockShift.endTime}`);
-          
-          await updateUserSettings(userId, { lastNotifyDate: todayStr });
-          hasCheckedRef.current = true;
-          return;
-      }
-
-      // 2. Handle Real Mode (LINE LIFF)
-      if (shifts.length === 0) return;
-
-      const todayEvent = events.find(e => {
-        const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
-        return format(d, "yyyy-MM-dd") === todayStr;
-      });
-
-      if (!todayEvent) return;
-
-      const shift = shifts.find(s => s.id === todayEvent.shiftId);
-      if (!shift) return;
+      // 🚨 HARDCODE TEST MODE 🚨
+      const isConfirm = window.confirm("ต้องการทดสอบส่งข้อความ 'Hello' ลงแชทตอนนี้เลยไหม?");
+      if (!isConfirm) return;
 
       const context = liff.getContext();
-      if (!context || context.type === 'none') {
-        hasCheckedRef.current = true;
-        return;
-      }
-
       try {
-        const messageText = `📅 แจ้งเตือนเวรวันนี้: ${shift.title}\n⏰ เวลา: ${shift.startTime || "00:00"} - ${shift.endTime || "00:00"}`;
-        
         await liff.sendMessages([
           {
             type: "text",
-            text: messageText
+            text: "สวัสดีครับ! นี่คือข้อความทดสอบจากระบบอัตโนมัติ 📅"
           }
         ]);
-
-        await updateUserSettings(userId, { lastNotifyDate: todayStr });
-        hasCheckedRef.current = true;
-        alert(`✅ ส่งข้อความเรียบร้อย! (Context: ${context.type})`);
+        alert(`✅ ส่งสำเร็จ! (Context: ${context?.type || 'unknown'})`);
       } catch (error) {
-        console.error("Failed to send auto-notification", error);
-        alert("❌ ไม่สามารถส่งข้อความได้: " + (error instanceof Error ? error.message : "โปรดตรวจสอบ Scopes chat_message.write"));
+        console.error("Test send failed", error);
+        alert("❌ ส่งไม่สำเร็จ: " + (error instanceof Error ? error.message : "โปรดตรวจสอบ Scopes"));
       }
     };
 
