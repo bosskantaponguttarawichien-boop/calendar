@@ -73,15 +73,6 @@ export function useAutoNotify(userId: string | null) {
     const now = getGregorianDate();
     const todayStr = format(now, "yyyy-MM-dd");
 
-    // 🚨 AGGRESSIVE TRACE (Place here to see data once it's non-zero)
-    /*
-    const eventDates = events.map(e => {
-        const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
-        return format(getGregorianDate(d), "yyyy-MM-dd");
-    });
-    alert(`[SYSTEM TRACE]\nUser: ${userId}\nToday: ${todayStr}\nAuto: ${settings.autoNotify}\nShifts: ${shifts.length}\nEvents: ${events.length}\nSample: ${eventDates[0]}`);
-    */
-
     if (!settings.autoNotify) return;
 
     /* 
