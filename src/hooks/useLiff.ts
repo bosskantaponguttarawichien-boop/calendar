@@ -13,6 +13,18 @@ export function useLiff() {
 
     useEffect(() => {
         const init = async () => {
+            const isLocal = typeof window !== "undefined" && 
+                (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+            if (isLocal) {
+                console.warn("[LIFF] Mock Mode: Localhost detected. Using mock user.");
+                setUserId("mock-user-123");
+                setDisplayName("Mock User (Local)");
+                setPictureUrl("https://www.w3schools.com/howto/img_avatar.png");
+                setLoading(false);
+                return;
+            }
+
             try {
                 if (!liff.id) {
                     await liff.init({ liffId: LIFF_ID });
@@ -37,5 +49,12 @@ export function useLiff() {
         }
     }, []);
 
-    return { userId, displayName, pictureUrl, loading };
+    return { 
+        userId, 
+        displayName, 
+        pictureUrl, 
+        loading, 
+        isMock: typeof window !== "undefined" && 
+            (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
+    };
 }
