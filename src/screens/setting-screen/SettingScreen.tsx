@@ -44,10 +44,10 @@ export default function SettingScreen({ user }: { user?: any }) {
         </div>
         <div>
           <p className="font-bold text-slate-800 dark:text-slate-100 text-base">
-            {user ? user.displayName : "ผู้ใช้งาน"}
+            {user?.displayName || "ผู้ใช้งาน"}
           </p>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            {user ? "เข้าสู่ระบบด้วย LINE แล้ว" : "ลงชื่อเข้าใช้งานด้วย LINE"}
+            {user?.displayName ? "เข้าสู่ระบบด้วย LINE แล้ว" : "ลงชื่อเข้าใช้งานด้วย LINE"}
           </p>
         </div>
       </div>

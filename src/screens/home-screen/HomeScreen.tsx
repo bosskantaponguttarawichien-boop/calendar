@@ -115,7 +115,7 @@ const DayCellContent = React.memo(({
 DayCellContent.displayName = "DayCellContent";
 
 const HomeScreen = () => {
-    const { userId, loading: liffLoading } = useLiff();
+    const { userId, displayName, pictureUrl, loading: liffLoading } = useLiff();
     const {
         calendarRef,
         calendarWrapperRef,
@@ -161,7 +161,7 @@ const HomeScreen = () => {
     const renderPageContent = () => {
         switch (activeTab) {
             case "setting":
-                return <SettingScreen />;
+                return <SettingScreen user={{ displayName, pictureUrl }} />;
             case "result":
                 return <ResultScreen />;
             case "group":
