@@ -23,33 +23,27 @@ export function useAutoNotify(userId: string | null) {
     let shifts: Shift[] = [];
 
     const checkAndNotify = async () => {
-      // Basic checks
       if (!settings || !settings.autoNotify || hasCheckedRef.current) return;
       
       const todayStr = format(new Date(), "yyyy-MM-dd");
+      
       if (settings.lastNotifyDate === todayStr) {
         hasCheckedRef.current = true;
         return;
       }
 
-      // Check if we have events and shifts yet
-      if (events.length === 0 || shifts.length === 0) return;
+      if (shifts.length === 0) return;
 
       const todayEvent = events.find(e => {
         const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
         return format(d, "yyyy-MM-dd") === todayStr;
       });
 
-      if (!todayEvent) {
-          // No event today, just mark as checked for this session
-          hasCheckedRef.current = true;
-          return;
-      }
+      if (!todayEvent) return;
 
       const shift = shifts.find(s => s.id === todayEvent.shiftId);
       if (!shift) return;
 
-      // Check if opened from a chat
       const context = liff.getContext();
       if (!context || context.type === 'none') {
         hasCheckedRef.current = true;
@@ -57,7 +51,6 @@ export function useAutoNotify(userId: string | null) {
       }
 
       try {
-        console.log("[AutoNotify] Sending message to LINE...");
         await liff.sendMessages([
           {
             type: "flex",
@@ -140,13 +133,10 @@ export function useAutoNotify(userId: string | null) {
           }
         ]);
 
-        // Update lastNotifyDate so we don't notify again today
         await updateUserSettings(userId, { lastNotifyDate: todayStr });
         hasCheckedRef.current = true;
-        console.log("[AutoNotify] Notification sent and state updated.");
       } catch (error) {
         console.error("Failed to send auto-notification", error);
-        // Don't mark as checked so it might retry on next mount or state change
       }
     };
 
