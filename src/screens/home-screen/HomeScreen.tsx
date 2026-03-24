@@ -26,6 +26,8 @@ import GroupScreen from "@/screens/group-screen/GroupScreen";
 import GroupCalendarScreen from "@/screens/group-screen/components/GroupCalendarScreen";
 import EventModal from "./components/EventModal";
 import MonthPickerModal from "./components/MonthPickerModal";
+import { FlexMessageEmulator } from "@/components/debug/FlexMessageEmulator";
+import { buildShiftCarouselMessage } from "@/lib/flexMessageBuilder";
 import NavBar from "./components/NavBar";
 import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
@@ -168,9 +170,9 @@ const HomeScreen = () => {
                 return <ResultScreen />;
             case "group":
                 if (selectedGroup) {
-                    return <GroupCalendarScreen 
-                        group={selectedGroup} 
-                        onBack={() => setSelectedGroup(null)} 
+                    return <GroupCalendarScreen
+                        group={selectedGroup}
+                        onBack={() => setSelectedGroup(null)}
                     />;
                 }
                 return <GroupScreen onGroupClick={setSelectedGroup} />;
@@ -306,6 +308,23 @@ const HomeScreen = () => {
                     onMonthSelect={handleMonthSelect}
                     onToday={handlePickerToday}
                 />
+            )}
+
+            {/* Debug Section for Localhost */}
+            {typeof window !== "undefined" && window.location.hostname === "localhost" && (
+                <div style={{ marginTop: '40px', padding: '20px', borderTop: '2px dashed #ccc', paddingBottom: '100px' }}>
+                    <h3 style={{ marginBottom: '10px', textAlign: 'center' }}>LINE Flex Message Preview (Local Only)</h3>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <FlexMessageEmulator json={
+                            buildShiftCarouselMessage(
+                                { title: "เวรเช้า", startTime: "08:00", endTime: "16:00", color: "#f97316", icon: "morning" },
+                                { title: "เวรดึก", startTime: "00:00", endTime: "08:00", color: "#8b5cf6", icon: "night" },
+                                "อ. 24 มี.ค.",
+                                "พ. 25 มี.ค."
+                            )
+                        } />
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -3,8 +3,9 @@ import liff from "@/lib/liff";
 import { useUserSettingsService, UserSettings } from "./useUserSettingsService";
 import { useEventService } from "./useEventService";
 import { useShiftController } from "./useShiftController";
-import { format, startOfMonth, endOfMonth } from "date-fns";
-import { EventData, Shift } from "@/types/event.types";
+import { format, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { EventData } from "@/types/event.types";
+import { buildShiftCarouselMessage } from "@/lib/flexMessageBuilder";
 
 export function useAutoNotify(userId: string | null) {
   const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
@@ -92,18 +93,22 @@ export function useAutoNotify(userId: string | null) {
       return eventDateStr === todayStr;
     });
 
-    if (!todayEvent) {
+    const tomorrow = addDays(now, 1);
+    const tomorrowStr = format(tomorrow, "yyyy-MM-dd");
+    const tomorrowEvent = events.find(e => {
+      const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
+      const eventDateStr = format(getGregorianDate(d), "yyyy-MM-dd");
+      return eventDateStr === tomorrowStr;
+    });
+
+    if (!todayEvent && !tomorrowEvent) {
       hasCheckedRef.current = true;
-      console.log("[AutoNotify] Match missed for today:", todayStr);
+      console.log("[AutoNotify] Match missed for today and tomorrow:", todayStr);
       return;
     }
 
-    const shift = shifts.find(s => s.id === todayEvent.shiftId);
-    if (!shift) {
-      hasCheckedRef.current = true;
-      console.log("[AutoNotify] Found event but no matching shift object for ID:", todayEvent.shiftId);
-      return;
-    }
+    const todayShift = todayEvent ? shifts.find(s => s.id === todayEvent.shiftId) : null;
+    const tomorrowShift = tomorrowEvent ? shifts.find(s => s.id === tomorrowEvent.shiftId) : null;
 
     const context = liff.getContext();
     if (!context || context.type === 'none') {
@@ -113,87 +118,12 @@ export function useAutoNotify(userId: string | null) {
     }
 
     try {
-      await liff.sendMessages([
-        {
-          type: "flex",
-          altText: `วันนี้มีเวร: ${shift.title}`,
-          contents: {
-            type: "bubble",
-            size: "mega",
-            header: {
-              type: "box",
-              layout: "vertical",
-              contents: [
-                {
-                  type: "text",
-                  text: "แจ้งเตือนเวรวันนี้",
-                  weight: "bold",
-                  color: "#ffffff",
-                  size: "sm"
-                }
-              ],
-              backgroundColor: shift.color || "#334155"
-            },
-            body: {
-              type: "box",
-              layout: "vertical",
-              contents: [
-                {
-                  type: "text",
-                  text: shift.title,
-                  weight: "bold",
-                  size: "xxl",
-                  margin: "md"
-                },
-                {
-                  type: "box",
-                  layout: "vertical",
-                  margin: "lg",
-                  spacing: "sm",
-                  contents: [
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        {
-                          type: "text",
-                          text: "เวลา",
-                          color: "#aaaaaa",
-                          size: "sm",
-                          flex: 1
-                        },
-                        {
-                          type: "text",
-                          text: `${shift.startTime || "00:00"} - ${shift.endTime || "00:00"}`,
-                          wrap: true,
-                          color: "#666666",
-                          size: "sm",
-                          flex: 5
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            footer: {
-              type: "box",
-              layout: "vertical",
-              spacing: "sm",
-              contents: [
-                {
-                  type: "text",
-                  text: "ส่งโดย Calendar App",
-                  size: "xs",
-                  color: "#aaaaaa",
-                  align: "center"
-                }
-              ]
-            }
-          }
-        }
-      ]);
+      const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
+      const todayDateText = thaiDateFormatter.format(now);
+      const tomorrowDateText = thaiDateFormatter.format(tomorrow);
+      
+      const flexMessage = buildShiftCarouselMessage(todayShift, tomorrowShift, todayDateText, tomorrowDateText);
+      await liff.sendMessages([flexMessage as any]);
 
       await updateUserSettings(userId, { lastNotifyDate: todayStr });
       hasCheckedRef.current = true;
