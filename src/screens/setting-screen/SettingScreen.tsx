@@ -1,9 +1,12 @@
 "use client";
 
 import React from "react";
-import { Palette, ChevronRight, LogOut, User, ClipboardList, Moon } from "lucide-react";
+import { Palette, ChevronRight, LogOut, User, ClipboardList, Moon, Bell } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useRouter } from "next/navigation";
+import { useUserSettingsService, UserSettings } from "@/hooks/useUserSettingsService";
+import { useLiff } from "@/hooks/useLiff";
+import { useEffect, useState } from "react";
 
 type SettingItem = { icon: React.ElementType; label: string; desc: string; href?: string };
 
@@ -26,6 +29,28 @@ const settingItems: { group: string; items: SettingItem[] }[] = [
 export default function SettingScreen({ user }: { user?: any }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const router = useRouter();
+  const { userId } = useLiff();
+  const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
+  const [settings, setSettings] = useState<UserSettings | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    const unsub = subscribeToUserSettings(userId, (newSettings) => {
+      setSettings(newSettings);
+    });
+    return unsub;
+  }, [userId, subscribeToUserSettings]);
+
+  const toggleAutoNotify = async () => {
+    if (!userId || !settings) return;
+    const newValue = !settings.autoNotify;
+    try {
+      await updateUserSettings(userId, { autoNotify: newValue });
+    } catch (err) {
+      console.error("Failed to toggle auto notify", err);
+    }
+  };
+
 
   return (
     <div className="flex-grow overflow-y-auto px-1 pb-2">
@@ -117,6 +142,32 @@ export default function SettingScreen({ user }: { user?: any }) {
           </div>
         </div>
       ))}
+
+      {/* Notification Section */}
+      <div className="mb-4">
+        <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2">
+          การแจ้งเตือน
+        </p>
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden">
+          <button
+            onClick={toggleAutoNotify}
+            className="w-full flex items-center gap-4 px-5 py-4 transition-colors active:bg-slate-50 dark:active:bg-slate-700"
+          >
+            <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+              <Bell size={18} className="text-slate-700 dark:text-slate-300" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">ส่งแจ้งเตือนลงแชทอัตโนมัติ</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs">ส่งเวรของวันนี้เข้าแชทเมื่อเปิดแอป</p>
+            </div>
+            <div 
+              className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center ${settings?.autoNotify ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'}`}
+            >
+              <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${settings?.autoNotify ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+          </button>
+        </div>
+      </div>
 
       {/* Logout */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden mb-4">

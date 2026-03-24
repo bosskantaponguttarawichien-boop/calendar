@@ -10,6 +10,8 @@ import {
 
 export interface UserSettings {
     shiftsOrder: string[];
+    autoNotify?: boolean;
+    lastNotifyDate?: string;
 }
 
 export function useUserSettingsService() {
@@ -24,7 +26,7 @@ export function useUserSettingsService() {
             if (snapshot.exists()) {
                 onUpdate(snapshot.data() as UserSettings);
             } else {
-                onUpdate({ shiftsOrder: [] });
+                onUpdate({ shiftsOrder: [], autoNotify: false, lastNotifyDate: "" });
             }
         });
 

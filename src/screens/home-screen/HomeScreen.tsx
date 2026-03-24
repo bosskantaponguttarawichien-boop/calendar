@@ -29,6 +29,7 @@ import MonthPickerModal from "./components/MonthPickerModal";
 import NavBar from "./components/NavBar";
 import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
+import { useAutoNotify } from "@/hooks/useAutoNotify";
 import EventSummaryModal from "./components/EventSummaryModal";
 import { Group } from "@/types/group.types";
 
@@ -116,6 +117,7 @@ DayCellContent.displayName = "DayCellContent";
 
 const HomeScreen = () => {
     const { userId, displayName, pictureUrl, loading: liffLoading } = useLiff();
+    useAutoNotify(userId);
     const {
         calendarRef,
         calendarWrapperRef,
