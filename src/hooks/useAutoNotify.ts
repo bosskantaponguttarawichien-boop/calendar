@@ -69,14 +69,26 @@ export function useAutoNotify(userId: string | null) {
 
     // 2. Real Logic (Wait for data)
     if (!settings || shifts.length === 0 || events.length === 0) {
-        // Data not ready yet, will be called again on next state update
+        // Log to console but don't show alert yet (it might just be loading)
+        console.log("[AutoNotify] Waiting for data...", { settings: !!settings, shifts: shifts.length, events: events.length });
         return;
     }
 
-    if (!settings.autoNotify) return;
-
     const now = getGregorianDate();
     const todayStr = format(now, "yyyy-MM-dd");
+
+    // TRACE ALERT (Temporary for Debug)
+    const eventDates = events.map(e => {
+        const d = e.start instanceof Date ? e.start : (e.start as any).toDate();
+        return format(getGregorianDate(d), "yyyy-MM-dd");
+    });
+    
+    alert(`[TRACE]\nToday: ${todayStr}\nAuto: ${settings.autoNotify}\nEvents: ${events.length}\nAll Dates: ${eventDates.slice(0, 5).join(", ")}`);
+
+    if (!settings.autoNotify) {
+        console.log("[AutoNotify] Disabled in settings.");
+        return;
+    }
 
     /* 
     if (settings.lastNotifyDate === todayStr) {
