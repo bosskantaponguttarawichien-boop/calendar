@@ -49,6 +49,9 @@ export function useAutoNotify(userId: string | null) {
     const isLocal = typeof window !== "undefined" && 
         (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
+    // 🚨 AGGRESSIVE TRACE (Ultimate)
+    alert(`[SYSTEM TRACE]\nUser: ${userId}\nLocal: ${isLocal}\nSettings: ${!!settings}\nShifts: ${shifts.length}\nEvents: ${events.length}`);
+
     if (!userId || hasCheckedRef.current) return;
 
     // 1. Mock Mode (Immediate)
