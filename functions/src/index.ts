@@ -17,7 +17,7 @@ const lineClient = new messagingApi.MessagingApiClient({
 
 export const sendDailyShiftNotifications = onSchedule(
   {
-    schedule: "0 6 * * *",
+    schedule: "0 0 * * *",
     timeZone: "Asia/Bangkok",
   },
   async (_event) => {
@@ -109,13 +109,14 @@ export const sendDailyShiftNotifications = onSchedule(
         const flexMessage = buildShiftCarouselMessage(todayShift, tomorrowShift, todayDateText, tomorrowDateText);
 
         try {
+          const targetId = userDoc.data().targetId || userId;
           await lineClient.pushMessage({
-            to: userId,
+            to: targetId,
             messages: [flexMessage as any]
           });
-          logger.info(`Successfully pushed notification to user: ${userId}`);
+          logger.info(`Successfully pushed notification to ${targetId} for user: ${userId}`);
         } catch (pushErr) {
-          logger.error(`Failed to push to user ${userId}:`, pushErr);
+          logger.error(`Failed to push to target for user ${userId}:`, pushErr);
         }
       }
     } catch (err) {

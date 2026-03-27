@@ -12,6 +12,8 @@ export interface UserSettings {
     shiftsOrder: string[];
     autoNotify?: boolean;
     lastNotifyDate?: string;
+    targetId?: string;
+    targetType?: "utou" | "group" | "room" | "none";
 }
 
 export function useUserSettingsService() {
@@ -43,8 +45,27 @@ export function useUserSettingsService() {
         }
     }, []);
 
+    const ensureUserSettings = useCallback(async (userId: string, context: { targetId: string; targetType: any }) => {
+        try {
+            const docRef = doc(db, "user-settings", userId);
+            await setDoc(docRef, {
+                targetId: context.targetId,
+                targetType: context.targetType,
+                // Only set autoNotify to true if it's a new document or not already set
+                // We'll use merge: true but we can't easily check existence without a getDoc
+                // So we'll just merge the targetId and targetType.
+            }, { merge: true });
+            
+            // If we want to default autoNotify to true for new users, we might need a getDoc first
+            // but for simplicity, let's just make sure targetId is up to date.
+        } catch (error) {
+            console.error("Error ensuring user settings:", error);
+        }
+    }, []);
+
     return {
         subscribeToUserSettings,
-        updateUserSettings
+        updateUserSettings,
+        ensureUserSettings
     };
 }

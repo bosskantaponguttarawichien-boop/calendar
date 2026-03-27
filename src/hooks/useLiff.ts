@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import liff from "@/lib/liff";
+import { useUserSettingsService } from "./useUserSettingsService";
 
-const LIFF_ID = "2009451557-lZpkB3ag"; // Keep local if not exported, or import
+const LIFF_ID = "2009451557-lZpkB3ag";
 
 export function useLiff() {
     const [userId, setUserId] = useState<string | null>(null);
     const [displayName, setDisplayName] = useState<string | null>(null);
     const [pictureUrl, setPictureUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const { ensureUserSettings } = useUserSettingsService();
 
     useEffect(() => {
         const init = async () => {
@@ -18,9 +20,14 @@ export function useLiff() {
 
             if (isLocal) {
                 console.warn("[LIFF] Mock Mode: Localhost detected. Using mock user.");
-                setUserId("mock-user-123");
+                const mockUserId = "mock-user-123";
+                setUserId(mockUserId);
                 setDisplayName("Mock User (Local)");
                 setPictureUrl("https://www.w3schools.com/howto/img_avatar.png");
+                
+                // Also ensure mock settings
+                ensureUserSettings(mockUserId, { targetId: mockUserId, targetType: "utou" });
+                
                 setLoading(false);
                 return;
             }
@@ -34,6 +41,15 @@ export function useLiff() {
                     setUserId(profile.userId);
                     setDisplayName(profile.displayName);
                     setPictureUrl(profile.pictureUrl || null);
+
+                    // Capture context for targeting notifications
+                    const context = liff.getContext();
+                    const targetId = context?.groupId || context?.roomId || profile.userId;
+                    const targetType = context?.type || "utou";
+
+                    if (profile.userId) {
+                        ensureUserSettings(profile.userId, { targetId, targetType });
+                    }
                 } else {
                     liff.login();
                 }
@@ -47,7 +63,7 @@ export function useLiff() {
         if (typeof window !== "undefined") {
             init();
         }
-    }, []);
+    }, [ensureUserSettings]);
 
     return { 
         userId, 
