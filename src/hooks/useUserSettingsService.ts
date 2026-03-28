@@ -5,7 +5,8 @@ import { db } from "@/lib/firebase";
 import { 
     doc, 
     setDoc, 
-    onSnapshot 
+    onSnapshot,
+    getDoc
 } from "firebase/firestore";
 
 export interface UserSettings {
@@ -48,16 +49,22 @@ export function useUserSettingsService() {
     const ensureUserSettings = useCallback(async (userId: string, context: { targetId: string; targetType: any }) => {
         try {
             const docRef = doc(db, "user-settings", userId);
-            await setDoc(docRef, {
+            const docSnap = await getDoc(docRef);
+            
+            const updates: Partial<UserSettings> = {
                 targetId: context.targetId,
                 targetType: context.targetType,
-                // Only set autoNotify to true if it's a new document or not already set
-                // We'll use merge: true but we can't easily check existence without a getDoc
-                // So we'll just merge the targetId and targetType.
-            }, { merge: true });
-            
-            // If we want to default autoNotify to true for new users, we might need a getDoc first
-            // but for simplicity, let's just make sure targetId is up to date.
+            };
+
+            // Only set autoNotify to true if it's a new document or autoNotify is currently undefined
+            if (!docSnap.exists() || docSnap.data().autoNotify === undefined) {
+                // Default to true for groups/rooms to help with testing/onboarding
+                if (context.targetType === "group" || context.targetType === "room") {
+                    updates.autoNotify = true;
+                }
+            }
+
+            await setDoc(docRef, updates, { merge: true });
         } catch (error) {
             console.error("Error ensuring user settings:", error);
         }

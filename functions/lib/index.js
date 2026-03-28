@@ -48,10 +48,17 @@ const lineClient = new bot_sdk_1.messagingApi.MessagingApiClient({
     channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN,
 });
 exports.sendDailyShiftNotifications = (0, scheduler_1.onSchedule)({
-    schedule: "0 6 * * *",
+    schedule: "10 12 * * *",
     timeZone: "Asia/Bangkok",
 }, async (_event) => {
-    logger.info("Starting Daily Shift Notification Cron Job.");
+    const now = new Date();
+    // Thailand time offset
+    const timeOffset = 7 * 60 * 60000;
+    const localNow = new Date(now.getTime() + timeOffset);
+    const localTomorrow = new Date(localNow.getTime() + 24 * 60 * 60000);
+    const todayStr = (0, date_fns_1.format)(localNow, "yyyy-MM-dd");
+    const tomorrowStr = (0, date_fns_1.format)(localTomorrow, "yyyy-MM-dd");
+    logger.debug(`[CloudFunction] Running for today: ${todayStr}, tomorrow: ${tomorrowStr}`);
     try {
         // 1. Get users with autoNotify: true
         const settingsSnapshot = await db.collection("user-settings").where("autoNotify", "==", true).get();
@@ -63,23 +70,15 @@ exports.sendDailyShiftNotifications = (0, scheduler_1.onSchedule)({
         const mainShiftsSnapshot = await db.collection("main-shifts").get();
         const mainShifts = mainShiftsSnapshot.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
         // 3. Process each user
-        // Adjust to start of day in local time roughly
-        // The frontend uses getGregorianDate and formats to "yyyy-MM-dd".
-        // We'll calculate todayStr and tomorrowStr
-        const today = new Date();
-        // Ensure we are working with correct local time (Thailand GMT+7)
-        // Since Cloud Functions use UTC natively, offset it:
-        const timeOffset = 7 * 60 * 60000;
-        const localNow = new Date(today.getTime() + timeOffset);
-        const localTomorrow = new Date(localNow.getTime() + 24 * 60 * 60000);
-        const todayStr = (0, date_fns_1.format)(localNow, "yyyy-MM-dd");
-        const tomorrowStr = (0, date_fns_1.format)(localTomorrow, "yyyy-MM-dd");
         const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
         const todayDateText = thaiDateFormatter.format(localNow);
         const tomorrowDateText = thaiDateFormatter.format(localTomorrow);
         for (const userDoc of settingsSnapshot.docs) {
             const userId = userDoc.id;
-            // Fetch events for this user
+            const userData = userDoc.data();
+            const targetId = userData.targetId || userId;
+            // Fetch events for this user (only need current month)
+            // For robustness, we could fetch a wider range, but current month should suffice for today/tomorrow
             const eventsSnapshot = await db.collection("events").where("userId", "==", userId).get();
             const events = eventsSnapshot.docs.map(doc => {
                 var _a;
@@ -91,15 +90,22 @@ exports.sendDailyShiftNotifications = (0, scheduler_1.onSchedule)({
                 };
             });
             // Match events for today and tomorrow
-            const todayEvent = events.find(e => (0, date_fns_1.format)(new Date(e.start.getTime() + timeOffset), "yyyy-MM-dd") === todayStr);
-            const tomorrowEvent = events.find(e => (0, date_fns_1.format)(new Date(e.start.getTime() + timeOffset), "yyyy-MM-dd") === tomorrowStr);
+            const todayEvent = events.find(e => {
+                const eventDateStr = (0, date_fns_1.format)(new Date(e.start.getTime() + timeOffset), "yyyy-MM-dd");
+                return eventDateStr === todayStr;
+            });
+            const tomorrowEvent = events.find(e => {
+                const eventDateStr = (0, date_fns_1.format)(new Date(e.start.getTime() + timeOffset), "yyyy-MM-dd");
+                return eventDateStr === tomorrowStr;
+            });
             if (!todayEvent && !tomorrowEvent) {
-                continue; // Nothing to notify
+                logger.debug(`Skipping user ${userId}: No events for today or tomorrow.`);
+                continue;
             }
             // Fetch user specific shifts
             const userShiftsSnapshot = await db.collection("shifts").where("userId", "==", userId).get();
             const userShifts = userShiftsSnapshot.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
-            // Merge shifts logic
+            // Merge shifts logic (System + Overrides + Unique)
             const systemShifts = mainShifts.map(ms => (Object.assign(Object.assign({}, ms), { userId: "system" })));
             const overrides = new Map();
             const uniqueShifts = [];
@@ -107,13 +113,16 @@ exports.sendDailyShiftNotifications = (0, scheduler_1.onSchedule)({
                 if (shift.overrideId) {
                     overrides.set(shift.overrideId, shift);
                 }
+                else if (shift.mainShiftId) {
+                    overrides.set(shift.mainShiftId, shift);
+                }
                 else {
                     uniqueShifts.push(shift);
                 }
             });
             const mergedSystemShifts = systemShifts.map((ss) => {
                 if (overrides.has(ss.id)) {
-                    return Object.assign(Object.assign(Object.assign({}, ss), overrides.get(ss.id)), { id: overrides.get(ss.id).id, overrideId: overrides.get(ss.id).overrideId });
+                    return Object.assign(Object.assign(Object.assign({}, ss), overrides.get(ss.id)), { id: ss.id }); // Keep system ID for lookup
                 }
                 return ss;
             });
@@ -125,13 +134,13 @@ exports.sendDailyShiftNotifications = (0, scheduler_1.onSchedule)({
             const flexMessage = (0, flexMessageBuilder_1.buildShiftCarouselMessage)(todayShift, tomorrowShift, todayDateText, tomorrowDateText);
             try {
                 await lineClient.pushMessage({
-                    to: userId,
+                    to: targetId,
                     messages: [flexMessage]
                 });
-                logger.info(`Successfully pushed notification to user: ${userId}`);
+                logger.info(`Successfully pushed notification to ${targetId} (${userData.targetType || "utou"}) for user: ${userId}`);
             }
             catch (pushErr) {
-                logger.error(`Failed to push to user ${userId}:`, pushErr);
+                logger.error(`Failed to push to target ${targetId} for user ${userId}:`, pushErr);
             }
         }
     }
