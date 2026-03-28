@@ -17,8 +17,9 @@ const lineClient = new messagingApi.MessagingApiClient({
 
 export const sendDailyShiftNotifications = onSchedule(
   {
-    schedule: "10 12 * * *",
+    schedule: "30 12 * * *",
     timeZone: "Asia/Bangkok",
+    secrets: ["LINE_CHANNEL_ACCESS_TOKEN"],
   },
   async (_event) => {
     const now = new Date();
