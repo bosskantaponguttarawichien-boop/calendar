@@ -157,3 +157,93 @@ export const buildShiftCarouselMessage = (
     }
   };
 };
+
+export const buildGroupInviteMessage = (groupName: string, groupId: string) => {
+  const inviteUrl = `${LIFF_URL}?groupId=${groupId}`;
+  
+  return {
+    type: "flex",
+    altText: `คำเชิญเข้ากลุ่ม: ${groupName}`,
+    contents: {
+      "type": "bubble",
+      "size": "mega",
+      "hero": {
+        "type": "image",
+        "url": "https://img.freepik.com/free-vector/happy-business-colleagues-holding-big-calendar_74855-14050.jpg",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover",
+        "action": {
+          "type": "uri",
+          "uri": inviteUrl
+        }
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "📅 คำเชิญเข้ากลุ่ม",
+            "weight": "bold",
+            "color": "#1DB446",
+            "size": "sm"
+          },
+          {
+            "type": "text",
+            "text": groupName,
+            "weight": "bold",
+            "size": "xl",
+            "margin": "md",
+            "color": "#111827"
+          },
+          {
+            "type": "text",
+            "text": "เข้ามาร่วมกลุ่มจัดการเวรและกิจกรรมร่วมกันในแอปปฏิทินของฉันได้ที่นี่",
+            "size": "xs",
+            "color": "#6B7280",
+            "wrap": true
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#1DB446",
+            "action": {
+              "type": "uri",
+              "label": "เข้าร่วมกลุ่มทันที",
+              "uri": inviteUrl
+            },
+            "height": "sm"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "md",
+            "contents": [
+              {
+                "type": "text",
+                "text": "calendar-app.line.me",
+                "size": "xxs",
+                "color": "#9CA3AF",
+                "align": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "styles": {
+        "footer": {
+          "separator": true
+        }
+      }
+    }
+  };
+};

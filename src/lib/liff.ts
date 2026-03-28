@@ -1,6 +1,8 @@
 import liff from "@line/liff";
 
-const LIFF_ID = "2009451557-lZpkB3ag";
+import { buildGroupInviteMessage } from "./flexMessageBuilder";
+
+export const LIFF_ID = "2009451557-lZpkB3ag";
 
 export const initLiff = async () => {
     try {
@@ -88,12 +90,17 @@ export const shareGroupInvitation = async (groupId: string, groupName: string) =
 
     if (isPickerAvailable) {
         try {
-            const results = await liff.shareTargetPicker([
-                {
-                    type: "text" as const,
-                    text: `👋 สวัสดี! เข้ามาร่วมกลุ่ม "${groupName}" ในแอปปฏิทินของฉัน เพื่อจัดการเวรและกิจกรรมร่วมกันได้ที่นี่:\nhttps://liff.line.me/${LIFF_ID}?groupId=${groupId}`,
-                },
-            ]);
+            // Add a timeout of 8 seconds to prevent hanging silently
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("ShareTargetPicker timeout")), 8000)
+            );
+
+            const flexMessage = buildGroupInviteMessage(groupName, groupId);
+            
+            const results = await Promise.race([
+                liff.shareTargetPicker([flexMessage as any]),
+                timeoutPromise
+            ]) as { status: string } | null;
             
             if (results) {
                 console.log("[LIFF] shareTargetPicker sent successfully");
@@ -104,7 +111,7 @@ export const shareGroupInvitation = async (groupId: string, groupName: string) =
             }
         } catch (error) {
             console.error("[LIFF] shareTargetPicker failed:", error);
-            throw error;
+            return { success: false, reason: "error", error };
         }
     } else {
         console.warn("[LIFF] shareTargetPicker is NOT available in this context");

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Users, Briefcase, Heart, Trophy, Plus, Share2, Sparkles, PenLine, CheckCircle2, ArrowRight, Camera } from "lucide-react";
-import { shareGroupInvitation } from "@/lib/liff";
+import { X, Users, Briefcase, Heart, Trophy, Plus, Share2, Sparkles, PenLine, CheckCircle2, ArrowRight, Camera, Copy, Check, Loader2 } from "lucide-react";
+import { shareGroupInvitation, LIFF_ID } from "@/lib/liff";
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -32,12 +32,14 @@ const AVAILABLE_IMAGES = [
 export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGroupModalProps) {
   const [step, setStep] = useState<ModalStep>("form");
   const [groupName, setGroupName] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("work");
+  const [selectedCategory, setSelectedCategory] = useState("friends");
   const [groupImage, setGroupImage] = useState<string | null>(null);
   const [createdGroupId, setCreatedGroupId] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   if (!isOpen) return null;
 
@@ -47,6 +49,9 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
     setGroupImage(null);
     setCreatedGroupId(null);
     setShowImagePicker(false);
+    setInviteError(null);
+    setIsSharing(false);
+    setIsCopied(false);
     onClose();
   };
 
@@ -67,25 +72,55 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
     }
   };
 
+  const handleCopyLink = async () => {
+    if (createdGroupId) {
+      const link = `https://liff.line.me/${LIFF_ID}?groupId=${createdGroupId}`;
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(link);
+        } else {
+          const textArea = document.createElement("textarea");
+          textArea.value = link;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textArea);
+        }
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 3000);
+      } catch (err) {
+        console.error("Failed to copy:", err);
+        alert(`คัดลอกลิงก์นี้ส่งให้เพื่อน: ${link}`);
+      }
+    }
+  };
+
   const handleInvite = async () => {
     if (createdGroupId) {
+      console.log("[DEBUG] handleInvite called for ID:", createdGroupId);
       setInviteError(null);
+      setIsSharing(true);
       try {
         const result = await shareGroupInvitation(createdGroupId, groupName);
-        if (!result.success && result.reason === "api_unavailable") {
-          setInviteError("LINE Share Target Picker is not available.");
-          // Fallback: Copy link if possible or show alert
-          const link = `https://liff.line.me/2009451557-lZpkB3ag?groupId=${createdGroupId}`;
-          if (navigator.clipboard) {
-            await navigator.clipboard.writeText(link);
-            alert("ไม่สามารถเปิด LINE ได้โดยตรง แต่เราคัดลอกลิงก์เชิญให้คุณแล้ว! ส่งให้เพื่อนได้เลย");
-          } else {
-            alert(`คัดลอกลิงก์นี้ส่งให้เพื่อน: ${link}`);
+        console.log("[DEBUG] shareGroupInvitation result:", result);
+        if (!result.success) {
+          if (result.reason === "api_unavailable") {
+            setInviteError("LINE Share ไม่พร้อมใช้งาน");
+            handleCopyLink();
+          } else if (result.reason === "error") {
+            setInviteError("ไม่สามารถเปิด LINE ได้ (Timeout)");
+            handleCopyLink();
+          } else if (result.reason !== "cancelled") {
+            setInviteError("เกิดข้อผิดพลาดในการชวนเพื่อน");
+            handleCopyLink();
           }
         }
       } catch (err) {
-        console.error("Invite failed:", err);
-        setInviteError("เกิดข้อผิดพลาดในการชวนเพื่อน");
+        console.error("Invite failed exception:", err);
+        setInviteError("เกิดข้อผิดพลาดในการคำนวณ");
+        handleCopyLink();
+      } finally {
+        setIsSharing(false);
       }
     }
   };
@@ -212,7 +247,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
                 </button>
                 <button 
                   onClick={handleCreate}
-                  disabled={!groupName.trim()}
+                  disabled={!groupName.trim() || isCreating}
                   className={`flex-[1.5] py-3.5 px-6 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-2 ${
                     groupName.trim() && !isCreating
                       ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg active:scale-95" 
@@ -232,7 +267,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
                 <div className="absolute inset-0 bg-emerald-400 blur-3xl opacity-20 rounded-full animate-pulse" />
                 
                 {/* Visual Feedback with Profile Pic */}
-                <div className="relative w-28 h-28 flex items-center justify-center">
+                <div className="relative w-28 h-28 flex items-center justify-center text-center">
                     <div className="absolute inset-0 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border-4 border-emerald-500/20 shadow-xl" />
                     <div className="relative w-20 h-20 rounded-full overflow-hidden bg-white dark:bg-slate-800 shadow-inner flex items-center justify-center">
                         {groupImage ? (
@@ -257,7 +292,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
 
             <div className="w-full bg-slate-50 dark:bg-slate-800/30 rounded-[2.5rem] p-7 border border-slate-100 dark:border-slate-800 relative group overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex flex-col items-center space-y-5">
+                <div className="flex flex-col items-center space-y-6">
                     <div className="w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform relative">
                         <Share2 size={24} className="text-teal-500" />
                         <div className="absolute -top-1 -right-1 w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center animate-bounce">
@@ -268,15 +303,48 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
                         <p className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest leading-none">ชวนเพื่อนเข้ากลุ่ม</p>
                         <p className="text-[10px] text-slate-400 font-bold opacity-80 mt-1">ส่งคำชวนผ่าน LINE ทันที</p>
                     </div>
-                    <button 
-                        onClick={handleInvite}
-                        className="w-full bg-teal-500 hover:bg-teal-600 text-white font-black py-4.5 rounded-[1.25rem] shadow-xl shadow-teal-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn"
-                    >
-                        ชวนเพื่อนเลย
-                        <Share2 size={18} className="group-hover/btn:rotate-12 transition-transform" />
-                    </button>
+                    
+                    <div className="w-full space-y-3">
+                        <button 
+                            onClick={handleInvite}
+                            disabled={isSharing}
+                            className={`w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4.5 rounded-[1.25rem] shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn ${isSharing ? "opacity-90" : ""}`}
+                        >
+                            {isSharing ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" />
+                                    กำลังเปิด LINE...
+                                </>
+                            ) : (
+                                <>
+                                    ชวนเพื่อนเลย
+                                    <Share2 size={18} className="group-hover/btn:rotate-12 transition-transform" />
+                                </>
+                            )}
+                        </button>
+
+                        <button 
+                            onClick={handleCopyLink}
+                            className={`w-full bg-white dark:bg-slate-800 border-2 ${isCopied ? "border-emerald-500 text-emerald-500" : "border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400"} font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-[11px]`}
+                        >
+                            {isCopied ? (
+                                <>
+                                    <Check size={14} />
+                                    คัดลอกลิงก์แล้ว!
+                                </>
+                            ) : (
+                                <>
+                                    <Copy size={14} />
+                                    คัดลอกลิงก์เชิญเพื่อน
+                                </>
+                            )}
+                        </button>
+                    </div>
+
                     {inviteError && (
-                        <p className="text-[9px] text-rose-500 font-bold animate-in fade-in slide-in-from-top-1">{inviteError}</p>
+                        <p className="text-[10px] text-rose-500 font-bold bg-rose-50 dark:bg-rose-500/10 py-1.5 px-3 rounded-full animate-in fade-in slide-in-from-top-1">
+                            {inviteError}
+                        </p>
                     )}
                 </div>
             </div>

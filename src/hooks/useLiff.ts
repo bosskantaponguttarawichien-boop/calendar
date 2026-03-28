@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import liff from "@/lib/liff";
+import { useState, useEffect, useCallback } from "react";
+import liff, { LIFF_ID } from "@/lib/liff";
 import { useUserSettingsService } from "./useUserSettingsService";
-
-const LIFF_ID = "2009451557-lZpkB3ag";
+import { useGroupService } from "./useGroupService";
 
 export function useLiff() {
     const [userId, setUserId] = useState<string | null>(null);
@@ -12,6 +11,28 @@ export function useLiff() {
     const [pictureUrl, setPictureUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const { ensureUserSettings } = useUserSettingsService();
+    const { joinGroup } = useGroupService();
+
+    const handleJoinGroup = useCallback(async (uid: string, name: string, pic: string | null) => {
+        if (typeof window === "undefined") return;
+        
+        const params = new URLSearchParams(window.location.search);
+        const groupId = params.get("groupId");
+        
+        if (groupId) {
+            console.log("[LIFF] Detected groupId in URL, attempting to join:", groupId);
+            try {
+                await joinGroup(groupId, uid, name, pic);
+                alert(`ยินดีด้วย! คุณได้เข้าร่วมกลุ่มเรียบร้อยแล้ว ✨`);
+                
+                // Clear the groupId from URL to prevent re-joining on refresh
+                const newUrl = window.location.pathname + window.location.search.replace(/[?&]groupId=[^&]+/, "");
+                window.history.replaceState({}, "", newUrl);
+            } catch (err) {
+                console.error("[LIFF] Failed to join group:", err);
+            }
+        }
+    }, [joinGroup]);
 
     useEffect(() => {
         const init = async () => {
@@ -21,12 +42,15 @@ export function useLiff() {
             if (isLocal) {
                 console.warn("[LIFF] Mock Mode: Localhost detected. Using mock user.");
                 const mockUserId = "mock-user-123";
+                const mockName = "Mock User (Local)";
+                const mockPic = "https://www.w3schools.com/howto/img_avatar.png";
+                
                 setUserId(mockUserId);
-                setDisplayName("Mock User (Local)");
-                setPictureUrl("https://www.w3schools.com/howto/img_avatar.png");
+                setDisplayName(mockName);
+                setPictureUrl(mockPic);
 
-                // Also ensure mock settings
                 ensureUserSettings(mockUserId, { targetId: mockUserId, targetType: "utou" });
+                await handleJoinGroup(mockUserId, mockName, mockPic);
 
                 setLoading(false);
                 return;
@@ -42,13 +66,13 @@ export function useLiff() {
                     setDisplayName(profile.displayName);
                     setPictureUrl(profile.pictureUrl || null);
 
-                    // Capture context for targeting notifications
                     const context = liff.getContext();
                     const targetId = context?.groupId || context?.roomId || profile.userId;
                     const targetType = context?.type || "utou";
 
                     if (profile.userId) {
                         ensureUserSettings(profile.userId, { targetId, targetType });
+                        await handleJoinGroup(profile.userId, profile.displayName, profile.pictureUrl || null);
                     }
                 } else {
                     liff.login();
@@ -63,7 +87,7 @@ export function useLiff() {
         if (typeof window !== "undefined") {
             init();
         }
-    }, [ensureUserSettings]);
+    }, [ensureUserSettings, handleJoinGroup]);
 
     return {
         userId,
