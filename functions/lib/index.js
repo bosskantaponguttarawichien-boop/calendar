@@ -48,7 +48,7 @@ const lineClient = new bot_sdk_1.messagingApi.MessagingApiClient({
     channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN,
 });
 exports.sendDailyShiftNotifications = (0, scheduler_1.onSchedule)({
-    schedule: "30 12 * * *",
+    schedule: "50 12 * * *",
     timeZone: "Asia/Bangkok",
     secrets: ["LINE_CHANNEL_ACCESS_TOKEN"],
 }, async (_event) => {
