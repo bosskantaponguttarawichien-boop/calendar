@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { Users, UserPlus, Search, ChevronRight, MessageSquare, Plus, Briefcase, Heart, Trophy, Trash2, LogOut, X, AlertTriangle } from "lucide-react";
 
 import { Group } from "@/types/group.types";
-import CreateGroupModal from "./components/CreateGroupModal";
 import { useGroupService } from "@/hooks/useGroupService";
 import { useLiff } from "@/hooks/useLiff";
 
@@ -139,18 +138,20 @@ const SwipeableGroupItem = ({
     );
 };
 
+import { useRouter } from "next/navigation";
+
 interface GroupScreenProps {
   onGroupClick: (group: Group) => void;
 }
 
 export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
   const { userId, displayName, pictureUrl } = useLiff();
-  const { subscribeToUserGroups, createGroup, deleteGroup, leaveGroup } = useGroupService();
+  const { subscribeToUserGroups, deleteGroup, leaveGroup } = useGroupService();
   const [confirmDelete, setConfirmDelete] = useState<{ id: string, name: string, isCreator: boolean } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -164,16 +165,6 @@ export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
 
     return () => unsub();
   }, [userId, subscribeToUserGroups]);
-
-  const handleCreateGroup = async (name: string, category: string, image?: string) => {
-    if (!userId) return;
-    try {
-      const id = await createGroup(userId, displayName || "User", pictureUrl, { name, category, image });
-      return id;
-    } catch (error) {
-      console.error("Failed to create group:", error);
-    }
-  };
 
   const handleGroupAction = async () => {
     if (!confirmDelete || !userId || isDeleting) return;
@@ -216,7 +207,7 @@ export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <button 
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={() => router.push("/group/create")}
           className="flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-700 text-white rounded-2xl py-3 px-4 shadow-md active:scale-95 transition-transform hover:bg-slate-700 dark:hover:bg-slate-600"
         >
           <Plus size={18} />
@@ -267,12 +258,6 @@ export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
           <p className="text-[10px] text-slate-300 dark:text-slate-500">เริ่มสร้างกลุ่มใหม่เพื่อจัดการกิจกรรมร่วมกัน</p>
         </div>
       )}
-
-      <CreateGroupModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-        onCreate={handleCreateGroup}
-      />
 
       {/* Confirmation Modal */}
       {confirmDelete && (

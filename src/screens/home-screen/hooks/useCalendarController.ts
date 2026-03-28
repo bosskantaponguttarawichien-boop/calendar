@@ -108,12 +108,20 @@ export function useCalendarController(userId: string | null) {
         }
     }, [isModalOpen]);
 
-    // Handle URL params (return from /add page)
+    // Handle URL params (return from /add or /group/create page)
     useEffect(() => {
         const dateParam = searchParams.get("date");
         const openParam = searchParams.get("open");
+        const tabParam = searchParams.get("tab");
+
+        // Consume tab parameter and then clear it to avoid locking navigation
+        if (tabParam && activeTab !== tabParam) {
+            setActiveTab(tabParam);
+            // Clear the tab param from URL so user can freely navigate to other tabs
+            router.replace("/", { scroll: false });
+        }
+
         if (dateParam && openParam === "true") {
-            // Using a slight delay to avoid synchronous state update warning
             const timer = setTimeout(() => {
                 setSelectedDate(dateParam);
                 setIsModalOpen(true);
@@ -121,7 +129,7 @@ export function useCalendarController(userId: string | null) {
             }, 0);
             return () => clearTimeout(timer);
         }
-    }, [searchParams, router, setSelectedDate, setIsModalOpen]);
+    }, [searchParams, router, setSelectedDate, setIsModalOpen, setActiveTab, activeTab]);
 
     // Firestore real-time listener
     useEffect(() => {
