@@ -117,9 +117,44 @@ export function useGroupService() {
         }
     }, []);
 
+    const deleteGroup = useCallback(async (groupId: string) => {
+        try {
+            await deleteDoc(doc(db, "groups", groupId));
+        } catch (error) {
+            console.error("Error deleting group:", error);
+            throw error;
+        }
+    }, []);
+
+    const leaveGroup = useCallback(async (groupId: string, userId: string) => {
+        try {
+            const groupRef = doc(db, "groups", groupId);
+            const groupSnap = await getDoc(groupRef);
+
+            if (!groupSnap.exists()) {
+                throw new Error("Group not found");
+            }
+
+            const groupData = groupSnap.data();
+            const memberIds = groupData.memberIds || [];
+            const members = groupData.members || [];
+
+            await updateDoc(groupRef, {
+                members: members.filter((m: any) => m.id !== userId),
+                memberIds: memberIds.filter((id: string) => id !== userId),
+                updatedAt: new Date()
+            });
+        } catch (error) {
+            console.error("Error leaving group:", error);
+            throw error;
+        }
+    }, []);
+
     return {
         subscribeToUserGroups,
         createGroup,
-        joinGroup
+        joinGroup,
+        deleteGroup,
+        leaveGroup
     };
 }

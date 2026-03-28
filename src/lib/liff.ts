@@ -75,28 +75,41 @@ export const shareEvent = async (eventData: {
 };
 
 export const shareGroupInvitation = async (groupId: string, groupName: string) => {
-    if (liff.isLoggedIn() && liff.isApiAvailable("shareTargetPicker")) {
+    console.log("[LIFF] shareGroupInvitation called for group:", groupId);
+    
+    if (!liff.isLoggedIn()) {
+        console.warn("[LIFF] Not logged in, attempting login...");
+        liff.login();
+        return { success: false, reason: "needs_login" };
+    }
+
+    const isPickerAvailable = liff.isApiAvailable("shareTargetPicker");
+    console.log("[LIFF] shareTargetPicker available:", isPickerAvailable);
+
+    if (isPickerAvailable) {
         try {
             const results = await liff.shareTargetPicker([
                 {
-                    type: "text",
+                    type: "text" as const,
                     text: `👋 สวัสดี! เข้ามาร่วมกลุ่ม "${groupName}" ในแอปปฏิทินของฉัน เพื่อจัดการเวรและกิจกรรมร่วมกันได้ที่นี่:\nhttps://liff.line.me/${LIFF_ID}?groupId=${groupId}`,
                 },
             ]);
             
             if (results) {
-                console.log("[LIFF] shareTargetPicker sent");
+                console.log("[LIFF] shareTargetPicker sent successfully");
                 return { success: true };
             } else {
-                console.log("[LIFF] shareTargetPicker cancelled");
+                console.log("[LIFF] shareTargetPicker cancelled by user");
                 return { success: false, reason: "cancelled" };
             }
         } catch (error) {
-            console.error("shareTargetPicker failed", error);
+            console.error("[LIFF] shareTargetPicker failed:", error);
             throw error;
         }
+    } else {
+        console.warn("[LIFF] shareTargetPicker is NOT available in this context");
+        return { success: false, reason: "api_unavailable" };
     }
-    return { success: false, reason: "api_unavailable" };
 };
 
 export default liff;

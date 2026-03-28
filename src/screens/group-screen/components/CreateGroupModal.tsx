@@ -7,7 +7,7 @@ import { shareGroupInvitation } from "@/lib/liff";
 interface CreateGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, category: string, image?: string) => void;
+  onCreate: (name: string, category: string, image?: string) => Promise<string | void>;
 }
 
 type ModalStep = "form" | "success";
@@ -36,6 +36,8 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
   const [groupImage, setGroupImage] = useState<string | null>(null);
   const [createdGroupId, setCreatedGroupId] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -49,17 +51,42 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
   };
 
   const handleCreate = async () => {
-    if (groupName.trim()) {
-      const mockId = `group-${Date.now()}`;
-      setCreatedGroupId(mockId);
-      onCreate(groupName, selectedCategory, groupImage || undefined);
-      setStep("success");
+    if (groupName.trim() && !isCreating) {
+      setIsCreating(true);
+      try {
+        const id = await onCreate(groupName, selectedCategory, groupImage || undefined);
+        if (id) {
+          setCreatedGroupId(id);
+          setStep("success");
+        }
+      } catch (error) {
+        console.error("Failed to create group:", error);
+      } finally {
+        setIsCreating(false);
+      }
     }
   };
 
   const handleInvite = async () => {
     if (createdGroupId) {
-      await shareGroupInvitation(createdGroupId, groupName);
+      setInviteError(null);
+      try {
+        const result = await shareGroupInvitation(createdGroupId, groupName);
+        if (!result.success && result.reason === "api_unavailable") {
+          setInviteError("LINE Share Target Picker is not available.");
+          // Fallback: Copy link if possible or show alert
+          const link = `https://liff.line.me/2009451557-lZpkB3ag?groupId=${createdGroupId}`;
+          if (navigator.clipboard) {
+            await navigator.clipboard.writeText(link);
+            alert("ไม่สามารถเปิด LINE ได้โดยตรง แต่เราคัดลอกลิงก์เชิญให้คุณแล้ว! ส่งให้เพื่อนได้เลย");
+          } else {
+            alert(`คัดลอกลิงก์นี้ส่งให้เพื่อน: ${link}`);
+          }
+        }
+      } catch (err) {
+        console.error("Invite failed:", err);
+        setInviteError("เกิดข้อผิดพลาดในการชวนเพื่อน");
+      }
     }
   };
 
@@ -187,13 +214,13 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
                   onClick={handleCreate}
                   disabled={!groupName.trim()}
                   className={`flex-[1.5] py-3.5 px-6 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-2 ${
-                    groupName.trim() 
+                    groupName.trim() && !isCreating
                       ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg active:scale-95" 
                       : "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed"
                   }`}
                 >
-                  สร้างกลุ่ม
-                  <ArrowRight size={14} />
+                  {isCreating ? "กำลังสร้าง..." : "สร้างกลุ่ม"}
+                  {!isCreating && <ArrowRight size={14} />}
                 </button>
               </div>
             </div>
@@ -248,6 +275,9 @@ export default function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGr
                         ชวนเพื่อนเลย
                         <Share2 size={18} className="group-hover/btn:rotate-12 transition-transform" />
                     </button>
+                    {inviteError && (
+                        <p className="text-[9px] text-rose-500 font-bold animate-in fade-in slide-in-from-top-1">{inviteError}</p>
+                    )}
                 </div>
             </div>
 
