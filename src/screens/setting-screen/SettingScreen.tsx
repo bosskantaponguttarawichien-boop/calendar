@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useUserSettingsService, UserSettings } from "@/hooks/useUserSettingsService";
 import { useLiff } from "@/hooks/useLiff";
 import { useEffect, useState } from "react";
+import FriendshipModal from "./components/FriendshipModal";
 
 type SettingItem = { icon: React.ElementType; label: string; desc: string; href?: string };
 
@@ -29,9 +30,10 @@ const settingItems: { group: string; items: SettingItem[] }[] = [
 export default function SettingScreen({ user }: { user?: any }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const router = useRouter();
-  const { userId } = useLiff();
+  const { userId, getFriendshipFlag } = useLiff();
   const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
   const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [isFriendshipModalOpen, setIsFriendshipModalOpen] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -44,6 +46,16 @@ export default function SettingScreen({ user }: { user?: any }) {
   const toggleAutoNotify = async () => {
     if (!userId || !settings) return;
     const newValue = !settings.autoNotify;
+
+    // If turning ON, check friendship status first
+    if (newValue === true) {
+      const isFriend = await getFriendshipFlag();
+      if (!isFriend) {
+        setIsFriendshipModalOpen(true);
+        return;
+      }
+    }
+
     try {
       await updateUserSettings(userId, { autoNotify: newValue });
     } catch (err) {
@@ -178,6 +190,11 @@ export default function SettingScreen({ user }: { user?: any }) {
           <span className="text-red-500 font-medium text-sm">ออกจากระบบ</span>
         </button>
       </div>
+
+      <FriendshipModal 
+        isOpen={isFriendshipModalOpen} 
+        onClose={() => setIsFriendshipModalOpen(false)} 
+      />
     </div>
   );
 }

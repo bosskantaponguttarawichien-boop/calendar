@@ -7,6 +7,7 @@ import {
     Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle, X
 } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
+import { Shift, EventData } from "@/types/event.types";
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
     morning: Sun,
@@ -20,11 +21,12 @@ interface EventSummaryModalProps {
     isOpen: boolean;
     onClose: () => void;
     selectedDate: string | null;
-    events: any[];
+    events: EventData[];
+    shifts: Shift[];
     onEdit: () => void;
 }
 
-const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: EventSummaryModalProps) => {
+const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, shifts, onEdit }: EventSummaryModalProps) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [showModal, setShowModal] = useState(false);
 
@@ -69,7 +71,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
     };
 
     const dateEvents = events.filter(e => {
-        const eventDate = e.start instanceof Date ? e.start : e.start.toDate();
+        const eventDate = e.start instanceof Date ? e.start : (e.start as any).toDate();
         return format(eventDate, "yyyy-MM-dd") === selectedDate;
     });
 
@@ -84,7 +86,7 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
             {/* Modal Sheet */}
             <div className={`bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.4)] p-4 pt-4 pb-4 transition-transform duration-500 ease-out pointer-events-auto transform z-10 ${showModal ? "translate-y-0" : "translate-y-full"}`}>
                 <div className="relative flex flex-col items-center">
-                    {/* Centered Header - refined size as requested */}
+                    {/* Centered Header */}
                     <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5">
                         {getThaiDate()}
                     </h2>
@@ -92,8 +94,17 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                     <div className="flex flex-col gap-1 w-full">
                         {dateEvents.length > 0 ? (
                             dateEvents.map((event, idx) => {
-                                const IconComponent = (event.icon && ICON_MAP[event.icon]) || (event.category && ICON_MAP[event.category]) || HelpCircle;
-                                const eventColor = event.color || CATEGORY_COLORS[event.category] || "#334155";
+                                // Find shift metadata for richer/correct info
+                                const shift = shifts.find(s => s.id === (event.shiftId || (event as any).category));
+                                
+                                const title = shift?.title || event.title;
+                                const iconName = shift?.icon || (event as any).icon || (event as any).category;
+                                const eventColor = shift?.color || event.color || (CATEGORY_COLORS as any)[(event as any).category] || "#334155";
+                                
+                                const startTime = event.startTime || shift?.startTime;
+                                const endTime = event.endTime || shift?.endTime;
+
+                                const IconComponent = (iconName && ICON_MAP[iconName]) || HelpCircle;
 
                                 return (
                                     <div key={event.id || idx} className="flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/50">
@@ -106,16 +117,16 @@ const EventSummaryModal = ({ isOpen, onClose, selectedDate, events, onEdit }: Ev
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
-                                                    {event.title}
+                                                    {title}
                                                 </span>
-                                                {(event.startTime || event.endTime) && (
+                                                {(startTime || endTime) && (
                                                     <span className="text-xs font-medium text-slate-400 mt-0.5">
-                                                        {event.startTime || "??"} - {event.endTime || "??"}
+                                                        {startTime || "??"} - {endTime || "??"}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
-
+                                        
                                         <button
                                             onClick={onEdit}
                                             className="bg-white dark:bg-slate-700 text-slate-400 dark:text-slate-300 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 hover:text-slate-600 dark:hover:text-white transition-all active:scale-95"

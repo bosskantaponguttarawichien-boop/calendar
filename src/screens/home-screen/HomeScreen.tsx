@@ -92,12 +92,23 @@ const DayCellContent = React.memo(({
         return ICON_MAP[displayCategory.icon] || HelpCircle;
     }, [displayCategory]);
 
+    const isPast = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const cellDate = new Date(arg.date);
+        cellDate.setHours(0, 0, 0, 0);
+        return cellDate < today;
+    }, [arg.date]);
+
     return (
         <div
-            className="absolute inset-0 flex flex-col items-center pt-1 pb-2 transition-colors duration-300"
-            style={{ backgroundColor: color || "transparent" }}
+            className="absolute inset-0 flex flex-col items-center pt-1 pb-2 transition-all duration-300"
+            style={{ 
+                backgroundColor: color || "transparent",
+                opacity: (isPast && color) ? 0.45 : 1
+            }}
         >
-            <div className="pill-date-circle shrink-0 z-10">{arg.dayNumberText}</div>
+            <div className={`pill-date-circle shrink-0 z-10 ${isPast && color ? "opacity-70" : ""}`}>{arg.dayNumberText}</div>
 
             {displayCategory && IconComponent && !isDeleted && (
                 <div className="flex flex-col items-center justify-center flex-grow w-full animate-in zoom-in-50 duration-300 z-10">
@@ -165,7 +176,7 @@ const HomeScreen = () => {
             case "setting":
                 return <SettingScreen user={{ displayName, pictureUrl }} />;
             case "result":
-                return <ResultScreen />;
+                return <ResultScreen events={events} shifts={shifts} pickerDate={pickerDate} />;
             case "group":
                 if (selectedGroup) {
                     return <GroupCalendarScreen
@@ -280,6 +291,7 @@ const HomeScreen = () => {
                 onClose={() => setIsSummaryModalOpen(false)}
                 selectedDate={selectedDate}
                 events={events}
+                shifts={shifts}
                 onEdit={() => {
                     setIsSummaryModalOpen(false);
                     setIsModalOpen(true);
@@ -308,7 +320,7 @@ const HomeScreen = () => {
                 />
             )}
 
-            {/* Debug Section for Localhost */}
+            {/* Debug Section for Localhost - Commented out as requested
             {typeof window !== "undefined" && window.location.hostname === "localhost" && (
                 <div style={{ marginTop: '40px', padding: '20px', borderTop: '2px dashed #ccc', paddingBottom: '100px' }}>
                     <h3 style={{ marginBottom: '10px', textAlign: 'center' }}>LINE Flex Message Preview (Local Only)</h3>
@@ -324,6 +336,7 @@ const HomeScreen = () => {
                     </div>
                 </div>
             )}
+            */}
         </div>
     );
 };

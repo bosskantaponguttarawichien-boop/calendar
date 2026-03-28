@@ -15,7 +15,7 @@ export function useLiff() {
 
     useEffect(() => {
         const init = async () => {
-            const isLocal = typeof window !== "undefined" && 
+            const isLocal = typeof window !== "undefined" &&
                 (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
             if (isLocal) {
@@ -24,10 +24,10 @@ export function useLiff() {
                 setUserId(mockUserId);
                 setDisplayName("Mock User (Local)");
                 setPictureUrl("https://www.w3schools.com/howto/img_avatar.png");
-                
+
                 // Also ensure mock settings
                 ensureUserSettings(mockUserId, { targetId: mockUserId, targetType: "utou" });
-                
+
                 setLoading(false);
                 return;
             }
@@ -65,12 +65,31 @@ export function useLiff() {
         }
     }, [ensureUserSettings]);
 
-    return { 
-        userId, 
-        displayName, 
-        pictureUrl, 
-        loading, 
-        isMock: typeof window !== "undefined" && 
-            (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
+    return {
+        userId,
+        displayName,
+        pictureUrl,
+        loading,
+        isMock: typeof window !== "undefined" &&
+            (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"),
+        getFriendshipFlag: async (): Promise<boolean> => {
+            const isLocal = typeof window !== "undefined" &&
+                (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+            if (isLocal) {
+                // In local mock mode, we can simulate different states if needed.
+                // For now, let's return true by default so developers aren't blocked, 
+                // but SettingScreen will handle the check.
+                return false;
+            }
+
+            try {
+                const friendship = await liff.getFriendship();
+                return friendship.friendFlag;
+            } catch (err) {
+                console.error("Failed to get friendship status", err);
+                return false;
+            }
+        }
     };
 }

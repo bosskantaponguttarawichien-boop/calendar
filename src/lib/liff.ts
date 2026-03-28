@@ -74,4 +74,29 @@ export const shareEvent = async (eventData: {
     }
 };
 
+export const shareGroupInvitation = async (groupId: string, groupName: string) => {
+    if (liff.isLoggedIn() && liff.isApiAvailable("shareTargetPicker")) {
+        try {
+            const results = await liff.shareTargetPicker([
+                {
+                    type: "text",
+                    text: `👋 สวัสดี! เข้ามาร่วมกลุ่ม "${groupName}" ในแอปปฏิทินของฉัน เพื่อจัดการเวรและกิจกรรมร่วมกันได้ที่นี่:\nhttps://liff.line.me/${LIFF_ID}?groupId=${groupId}`,
+                },
+            ]);
+            
+            if (results) {
+                console.log("[LIFF] shareTargetPicker sent");
+                return { success: true };
+            } else {
+                console.log("[LIFF] shareTargetPicker cancelled");
+                return { success: false, reason: "cancelled" };
+            }
+        } catch (error) {
+            console.error("shareTargetPicker failed", error);
+            throw error;
+        }
+    }
+    return { success: false, reason: "api_unavailable" };
+};
+
 export default liff;
