@@ -150,11 +150,54 @@ export function useGroupService() {
         }
     }, []);
 
+    const getGroup = useCallback(async (groupId: string) => {
+        try {
+            const groupRef = doc(db, "groups", groupId);
+            const groupSnap = await getDoc(groupRef);
+            if (!groupSnap.exists()) return null;
+            
+            const data = groupSnap.data();
+            return {
+                id: groupSnap.id,
+                ...data,
+                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+                updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+            } as Group;
+        } catch (error) {
+            console.error("Error fetching group:", error);
+            throw error;
+        }
+    }, []);
+
+    const subscribeToGroup = useCallback((
+        groupId: string,
+        onUpdate: (group: Group | null) => void
+    ) => {
+        if (!groupId) return () => {};
+        const groupRef = doc(db, "groups", groupId);
+        const unsub = onSnapshot(groupRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                onUpdate({
+                    id: docSnap.id,
+                    ...data,
+                    createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+                    updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+                } as Group);
+            } else {
+                onUpdate(null);
+            }
+        });
+        return unsub;
+    }, []);
+
     return {
         subscribeToUserGroups,
         createGroup,
         joinGroup,
         deleteGroup,
-        leaveGroup
+        leaveGroup,
+        getGroup,
+        subscribeToGroup
     };
 }

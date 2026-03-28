@@ -15,6 +15,7 @@ export interface UserSettings {
     lastNotifyDate?: string;
     targetId?: string;
     targetType?: "utou" | "group" | "room" | "none";
+    notifyDataType?: "user" | "group";
 }
 
 export function useUserSettingsService() {
@@ -29,7 +30,7 @@ export function useUserSettingsService() {
             if (snapshot.exists()) {
                 onUpdate(snapshot.data() as UserSettings);
             } else {
-                onUpdate({ shiftsOrder: [], autoNotify: false, lastNotifyDate: "" });
+                onUpdate({ shiftsOrder: [], autoNotify: false, lastNotifyDate: "", notifyDataType: "user" });
             }
         });
 

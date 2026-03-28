@@ -101,10 +101,9 @@ export default function CreateGroupSuccess({
 
       <button
         onClick={onClose}
-        className="text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold text-[12px] uppercase tracking-[0.2em] transition-all flex items-center gap-2"
+        className="w-full max-w-[280px] h-[52px] bg-[#0b101b] text-white font-bold rounded-full shadow-lg shadow-black/10 active:scale-95 transition-all text-sm tracking-wider"
       >
-        <ChevronLeft size={14} />
-        กลับหน้าหลัก
+        ตกลง
       </button>
     </div>
   );

@@ -43,27 +43,6 @@ export default function SettingScreen({ user }: { user?: any }) {
     return unsub;
   }, [userId, subscribeToUserSettings]);
 
-  const toggleAutoNotify = async () => {
-    if (!userId || !settings) return;
-    const newValue = !settings.autoNotify;
-
-    // If turning ON, check friendship status first
-    if (newValue === true) {
-      const isFriend = await getFriendshipFlag();
-      if (!isFriend) {
-        setIsFriendshipModalOpen(true);
-        return;
-      }
-    }
-
-    try {
-      await updateUserSettings(userId, { autoNotify: newValue });
-    } catch (err) {
-      console.error("Failed to toggle auto notify", err);
-    }
-  };
-
-
   return (
     <div className="flex-grow overflow-y-auto px-1 pb-2">
       {/* Profile card */}
@@ -162,21 +141,17 @@ export default function SettingScreen({ user }: { user?: any }) {
         </p>
         <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden">
           <button
-            onClick={toggleAutoNotify}
+            onClick={() => router.push("/settings/notifications")}
             className="w-full flex items-center gap-4 px-5 py-4 transition-colors active:bg-slate-50 dark:active:bg-slate-700"
           >
             <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
               <Bell size={18} className="text-slate-700 dark:text-slate-300" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">ส่งแจ้งเตือนลงแชทอัตโนมัติ</p>
-              <p className="text-slate-400 dark:text-slate-500 text-xs">ส่งเวรของวันนี้เข้าแชทเมื่อเปิดแอป</p>
+              <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">การแจ้งเตือนอัตโนมัติ</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs">ตั้งค่าการส่งเวรอัตโนมัติลงแชท</p>
             </div>
-            <div 
-              className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center ${settings?.autoNotify ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'}`}
-            >
-              <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${settings?.autoNotify ? 'translate-x-4' : 'translate-x-0'}`} />
-            </div>
+            <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />
           </button>
         </div>
       </div>

@@ -106,8 +106,56 @@ export function useEventService() {
         await batch.commit();
     }, []);
 
+    const subscribeToMultiUserEvents = useCallback((
+        userIds: string[], 
+        onUpdate: (events: EventData[]) => void,
+        startDate?: Date,
+        endDate?: Date
+    ) => {
+        if (!userIds || userIds.length === 0) {
+            onUpdate([]);
+            return () => {};
+        }
+
+        // Firestore 'in' operator supports up to 30 values.
+        const chunk = userIds.slice(0, 30);
+        let qEvents = query(collection(db, "events"), where("userId", "in", chunk));
+        
+        if (startDate) {
+            qEvents = query(qEvents, where("start", ">=", Timestamp.fromDate(startDate)));
+        }
+        if (endDate) {
+            qEvents = query(qEvents, where("start", "<=", Timestamp.fromDate(endDate)));
+        }
+        
+        const mapDoc = (doc: any) => {
+            const data = doc.data();
+            const id = doc.id;
+            return {
+                id,
+                ...data,
+                collectionName: "events",
+                shiftId: data.shiftId || id,
+                start: data.start instanceof Timestamp ? data.start.toDate() : data.start,
+                end: data.end instanceof Timestamp ? data.end.toDate() : data.end,
+                startTime: data.startTime || null,
+                endTime: data.endTime || null,
+                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+                updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+            };
+        };
+
+        const unsubEvents = onSnapshot(qEvents, (snapshot) => {
+            const eventsData = snapshot.docs.map(doc => mapDoc(doc)) as EventData[];
+            onUpdate(eventsData);
+        });
+
+        return unsubEvents;
+    }, []);
+
     return { 
         subscribeToEvents, 
-        saveBatchEvents
+        saveBatchEvents,
+        subscribeToMultiUserEvents
     };
 }

@@ -106,7 +106,7 @@ export default function CreateGroupForm({
         <div className="mt-4 flex items-center gap-3 px-1">
           <button
             onClick={onClose}
-            className="h-[48px] flex-1 rounded-[1.5rem] font-bold text-sm bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-[#a1a9b5] dark:text-slate-500 active:scale-95 transition-all outline-none"
+            className="h-[48px] flex-1 rounded-full font-bold text-sm bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-[#a1a9b5] dark:text-slate-500 shadow-[0_4px_12px_rgba(0,0,0,0.03)] active:scale-95 transition-all outline-none"
           >
             ยกเลิก
           </button>
@@ -114,8 +114,8 @@ export default function CreateGroupForm({
           <button
             onClick={onCreate}
             disabled={!isFormValid || isCreating}
-            className={`h-[48px] flex-[2.1] rounded-[1.5rem] font-bold text-sm transition-all flex items-center justify-center gap-3 ${isFormValid && !isCreating
-              ? "bg-[#b8bfc9] dark:bg-slate-700 text-white shadow-sm active:scale-95"
+            className={`h-[48px] flex-[2.1] rounded-full font-bold text-sm transition-all flex items-center justify-center gap-3 ${isFormValid && !isCreating
+              ? "bg-slate-900 dark:bg-white  text-white dark:text-slate-900 shadow-[0_4px_16px_rgba(11,16,27,0.2)] active:scale-95"
               : "bg-slate-100 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 cursor-not-allowed border border-slate-50 dark:border-slate-800/50"
               }`}
           >

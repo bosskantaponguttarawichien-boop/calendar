@@ -14,6 +14,7 @@ export interface Group {
     image?: string;
     icon?: string;
     members: GroupMember[];
+    memberIds: string[];
     creatorId: string;
     lastMsg?: string;
     time?: string;

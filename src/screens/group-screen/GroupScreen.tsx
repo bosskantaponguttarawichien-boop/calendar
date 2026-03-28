@@ -140,11 +140,9 @@ const SwipeableGroupItem = ({
 
 import { useRouter } from "next/navigation";
 
-interface GroupScreenProps {
-  onGroupClick: (group: Group) => void;
-}
+interface GroupScreenProps {}
 
-export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
+export default function GroupScreen({}: GroupScreenProps) {
   const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,32 +188,26 @@ export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
 
   return (
     <div className="flex-grow overflow-y-auto px-1 pb-4">
-      {/* Search Bar */}
-      <div className="relative mb-4">
-        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <Search size={16} className="text-slate-400 dark:text-slate-500" />
+      {/* Search Bar & Actions */}
+      <div className="flex items-center gap-2 mb-6">
+        <div className="relative flex-grow">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400 dark:text-slate-500" />
+          </div>
+          <input
+            type="text"
+            placeholder="ค้นหากลุ่มของคุณ..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-100 dark:border-slate-700/50 rounded-[1.25rem] py-3.5 pl-11 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all shadow-sm"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="ค้นหากลุ่มของคุณ..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-white/20 dark:border-slate-700/30 rounded-full py-3 pl-12 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-600 transition-all shadow-sm"
-        />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
         <button 
           onClick={() => router.push("/group/create")}
-          className="flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-700 text-white rounded-2xl py-3 px-4 shadow-md active:scale-95 transition-transform hover:bg-slate-700 dark:hover:bg-slate-600"
+          className="flex items-center justify-center bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl w-11 h-11 shadow-lg shadow-slate-900/10 dark:shadow-none active:scale-95 transition-all hover:bg-slate-800 dark:hover:bg-white flex-shrink-0"
+          aria-label="สร้างกลุ่ม"
         >
-          <Plus size={18} />
-          <span className="text-xs font-bold">สร้างกลุ่ม</span>
-        </button>
-        <button className="flex items-center justify-center gap-2 bg-white/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl py-3 px-4 shadow-sm active:scale-95 transition-transform hover:bg-slate-50 dark:hover:bg-slate-700 border border-white/20 dark:border-slate-700/50">
-          <UserPlus size={18} />
-          <span className="text-xs font-bold">เข้าร่วมกลุ่ม</span>
+          <Plus size={20} className="stroke-[3]" />
         </button>
       </div>
 
@@ -242,7 +234,7 @@ export default function GroupScreen({ onGroupClick }: GroupScreenProps) {
                 group={group}
                 isLast={i === filteredGroups.length - 1}
                 isCreator={isCreator}
-                onClick={() => onGroupClick(group)}
+                onClick={() => router.push(`/group/${group.id}`)}
                 onDelete={() => {
                     setConfirmDelete({ id: group.id, name: group.name, isCreator });
                 }}

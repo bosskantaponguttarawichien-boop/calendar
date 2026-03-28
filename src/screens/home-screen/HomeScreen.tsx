@@ -1,40 +1,28 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import { ChevronDown, Plus, HelpCircle, Sun, CloudSun, Moon, SunMoon, MoonStar } from "lucide-react";
+import { ChevronDown, Plus, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
-
-const ICON_MAP: Record<string, any> = {
-    morning: Sun,
-    afternoon: CloudSun,
-    night: Moon,
-    allday: SunMoon,
-    nightafternoon: MoonStar,
-    Sun: Sun,
-    CloudSun: CloudSun,
-    Moon: Moon,
-    SunMoon: SunMoon,
-    MoonStar: MoonStar,
-};
 
 import SettingScreen from "@/screens/setting-screen/SettingScreen";
 import ResultScreen from "@/screens/result-screen/ResultScreen";
 import GroupScreen from "@/screens/group-screen/GroupScreen";
-import GroupCalendarScreen from "@/screens/group-screen/components/GroupCalendarScreen";
 import EventModal from "./components/EventModal";
 import MonthPickerModal from "./components/MonthPickerModal";
-import { FlexMessageEmulator } from "@/components/debug/FlexMessageEmulator";
-import { buildShiftCarouselMessage } from "@/lib/flexMessageBuilder";
 import NavBar from "./components/NavBar";
 import { useCalendarController } from "./hooks/useCalendarController";
 import { useLiff } from "@/hooks/useLiff";
+import { useGroupService } from "@/hooks/useGroupService";
 import EventSummaryModal from "./components/EventSummaryModal";
 import { Group } from "@/types/group.types";
+import { useRouter } from "next/navigation";
+import { DayCellContent } from "./components/calendar/DayCellContent";
+import { THAI_DAY_NAMES } from "@/components/calendar/CalendarIcon";
+import { GroupSwitcher } from "@/components/calendar/GroupSwitcher";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
-const THAI_DAY_NAMES = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
 const MODAL_APPROX_HEIGHT = 220;
 
@@ -44,7 +32,7 @@ const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Da
     const isTodayMonth =
         pickerDate.getMonth() === today.getMonth() &&
         pickerDate.getFullYear() === today.getFullYear();
-    const isTodayDay = isTodayMonth && date.getDay() === today.getDay();
+    const isTodayDay = isTodayMonth && date.getDate() === today.getDate();
 
     return (
         <div className="flex flex-col items-center gap-1">
@@ -57,78 +45,10 @@ const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Da
 });
 DayHeader.displayName = "DayHeader";
 
-const DayCellContent = React.memo(({
-    arg,
-    groupedEvents,
-    pendingEvents,
-    isModalOpen,
-    shifts
-}: {
-    arg: any;
-    groupedEvents: Record<string, any[]>;
-    pendingEvents: Record<string, string | number>;
-    isModalOpen: boolean;
-    shifts: any[];
-}) => {
-    const dateStr = format(arg.date, "yyyy-MM-dd");
-    const dayEvents = groupedEvents[dateStr] || [];
-
-    const pendingCat = pendingEvents[dateStr];
-    const isDeleted = pendingCat === "delete";
-    const hasExistingEvent = dayEvents.length > 0;
-
-    const activeCatId = (pendingCat && !isDeleted) ? pendingCat : (hasExistingEvent ? dayEvents[0].shiftId : null);
-    const displayCategory = shifts.find(s => s.id === activeCatId);
-
-    const color = isDeleted
-        ? ""
-        : (pendingCat && pendingCat !== "delete")
-            ? (displayCategory?.color || "#334155")
-            : (hasExistingEvent ? (dayEvents[0].color || displayCategory?.color || "#334155") : "");
-
-    const IconComponent = useMemo(() => {
-        if (!displayCategory) return null;
-        if (typeof displayCategory.icon !== 'string') return displayCategory.icon;
-        return ICON_MAP[displayCategory.icon] || HelpCircle;
-    }, [displayCategory]);
-
-    const isPast = useMemo(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const cellDate = new Date(arg.date);
-        cellDate.setHours(0, 0, 0, 0);
-        return cellDate < today;
-    }, [arg.date]);
-
-    return (
-        <div
-            className="absolute inset-0 flex flex-col items-center pt-1 pb-2 transition-all duration-300"
-            style={{ 
-                backgroundColor: color || "transparent",
-                opacity: (isPast && color) ? 0.45 : 1
-            }}
-        >
-            <div className={`pill-date-circle shrink-0 z-10 ${isPast && color ? "opacity-70" : ""}`}>{arg.dayNumberText}</div>
-
-            {displayCategory && IconComponent && !isDeleted && (
-                <div className="flex flex-col items-center justify-center flex-grow w-full animate-in zoom-in-50 duration-300 z-10">
-                    <div className="text-white">
-                        <IconComponent size={!isModalOpen ? 16 : 14} strokeWidth={2.5} />
-                    </div>
-                    {!isModalOpen && (
-                        <span className="text-[8px] font-black text-white uppercase tracking-tighter text-center leading-[1] px-0.5">
-                            {displayCategory.title || displayCategory.label}
-                        </span>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-});
-DayCellContent.displayName = "DayCellContent";
-
 const HomeScreen = () => {
+    const router = useRouter();
     const { userId, displayName, pictureUrl, loading: liffLoading } = useLiff();
+    const { subscribeToUserGroups } = useGroupService();
     const {
         calendarRef,
         calendarWrapperRef,
@@ -161,7 +81,15 @@ const HomeScreen = () => {
         shifts,
     } = useCalendarController(userId);
 
-    const [selectedGroup, setSelectedGroup] = React.useState<Group | null>(null);
+    const [allUserGroups, setAllUserGroups] = React.useState<Group[]>([]);
+    const [isGroupsMenuOpen, setIsGroupsMenuOpen] = React.useState(false);
+
+    // Fetch user groups to show switcher
+    React.useEffect(() => {
+        if (!userId) return;
+        const unsub = subscribeToUserGroups(userId, (groups) => setAllUserGroups(groups));
+        return () => unsub();
+    }, [userId, subscribeToUserGroups]);
 
     if (liffLoading) {
         return (
@@ -178,13 +106,7 @@ const HomeScreen = () => {
             case "result":
                 return <ResultScreen events={events} shifts={shifts} pickerDate={pickerDate} />;
             case "group":
-                if (selectedGroup) {
-                    return <GroupCalendarScreen
-                        group={selectedGroup}
-                        onBack={() => setSelectedGroup(null)}
-                    />;
-                }
-                return <GroupScreen onGroupClick={setSelectedGroup} />;
+                return <GroupScreen />;
             case "home":
             default:
                 return (
@@ -242,7 +164,7 @@ const HomeScreen = () => {
     };
 
     return (
-        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300 ${isModalOpen ? "pt-0" : "pt-2"}`}>
+        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300 ${isModalOpen ? "pt-0" : "pt-2"} relative`}>
             {/* Header — only show on home tab */}
             {activeTab === "home" && (
                 <div className={`flex justify-between items-center shrink-0 transition-all duration-500 ease-in-out ${isModalOpen ? "h-0 mb-0 pointer-events-none opacity-0 overflow-hidden" : "h-12 mb-2 opacity-100"}`}>
@@ -254,9 +176,14 @@ const HomeScreen = () => {
                         <ChevronDown size={16} className="text-slate-400" />
                     </button>
                     <div className="flex items-center gap-2">
-                        <button className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-95 transition-transform">
-                            ปฏิทินของฉัน
-                        </button>
+                        {allUserGroups.length > 0 && (
+                            <GroupSwitcher 
+                                allUserGroups={allUserGroups}
+                                isMenuOpen={isGroupsMenuOpen}
+                                setIsMenuOpen={setIsGroupsMenuOpen}
+                                showMyCalendarOption={true}
+                            />
+                        )}
                         <button
                             onClick={() => {
                                 const today = new Date();
@@ -279,10 +206,9 @@ const HomeScreen = () => {
             {renderPageContent()}
 
             {/* Navigation */}
-            <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isModalOpen || selectedGroup ? "translate-y-24 opacity-0 h-0 overflow-hidden" : "translate-y-0 opacity-100"}`}>
+            <div className={`mt-auto pt-2 pb-1 transition-all duration-500 ease-in-out ${isModalOpen ? "translate-y-24 opacity-0 h-0 overflow-hidden" : "translate-y-0 opacity-100"}`}>
                 <NavBar activeTab={activeTab} onTabChange={(tab) => {
                     setActiveTab(tab);
-                    if (tab !== "group") setSelectedGroup(null);
                 }} />
             </div>
 
@@ -319,24 +245,6 @@ const HomeScreen = () => {
                     onToday={handlePickerToday}
                 />
             )}
-
-            {/* Debug Section for Localhost - Commented out as requested
-            {typeof window !== "undefined" && window.location.hostname === "localhost" && (
-                <div style={{ marginTop: '40px', padding: '20px', borderTop: '2px dashed #ccc', paddingBottom: '100px' }}>
-                    <h3 style={{ marginBottom: '10px', textAlign: 'center' }}>LINE Flex Message Preview (Local Only)</h3>
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <FlexMessageEmulator json={
-                            buildShiftCarouselMessage(
-                                { title: "เวรเช้า", startTime: "08:00", endTime: "16:00", color: "#f97316", icon: "morning" },
-                                { title: "เวรดึก", startTime: "00:00", endTime: "08:00", color: "#8b5cf6", icon: "night" },
-                                "อ. 24 มี.ค.",
-                                "พ. 25 มี.ค."
-                            )
-                        } />
-                    </div>
-                </div>
-            )}
-            */}
         </div>
     );
 };
