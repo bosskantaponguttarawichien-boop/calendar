@@ -20,11 +20,11 @@ export const MemberFilters: React.FC<MemberFiltersProps> = ({
                     onClick={() => setSelectedMemberId(null)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
                         selectedMemberId === null
-                        ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-md"
                         : "bg-white/50 dark:bg-slate-800/50 text-slate-500 border-slate-100 dark:border-slate-700"
                     }`}
                 >
-                    <LayoutGrid size={12} className={selectedMemberId === null ? "text-white" : "text-slate-400"} />
+                    <LayoutGrid size={12} className={selectedMemberId === null ? "text-white dark:text-slate-900" : "text-slate-400"} />
                     <span className="text-[10px] font-black tracking-tight">ทั้งหมด</span>
                 </button>
             )}
@@ -37,11 +37,11 @@ export const MemberFilters: React.FC<MemberFiltersProps> = ({
                         onClick={() => setSelectedMemberId(member.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
                             isActive
-                            ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                            ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-md"
                             : "bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
                         }`}
                     >
-                        <div className={`w-2 h-2 rounded-full ${isActive ? "bg-emerald-400 animate-pulse" : "bg-slate-400 opacity-50"}`} />
+                        <div className={`w-2 h-2 rounded-full ${isActive ? "bg-emerald-400 dark:bg-emerald-600 animate-pulse" : "bg-slate-400 opacity-50"}`} />
                         <span className="text-[10px] font-bold tracking-tight">{member.displayName}</span>
                     </button>
                 );

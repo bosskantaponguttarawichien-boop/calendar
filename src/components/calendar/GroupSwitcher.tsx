@@ -29,25 +29,23 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
             {/* Group Identity Pill (Switcher) */}
             <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="h-11 flex items-center gap-2.5 px-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-white dark:border-slate-700/50 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 group outline-none"
+                className="h-10 flex items-center gap-1.5 px-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-white dark:border-slate-700/50 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 group outline-none"
             >
-                <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-sm overflow-hidden text-[10px]">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-300 shadow-sm overflow-hidden text-[8px]">
                     {currentGroup?.image || currentGroup?.icon ? (
                         <img src={currentGroup.image || currentGroup.icon} alt={currentGroup.name} className="w-full h-full object-cover" />
                     ) : showMyCalendarOption && !currentGroup ? (
-                        <div className="text-indigo-600 dark:text-indigo-400">
-                             <LayoutGrid size={12} strokeWidth={3} />
-                        </div>
+                        <LayoutGrid size={12} strokeWidth={3} />
                     ) : (
-                        <Users size={14} strokeWidth={3} />
+                        <Users size={12} strokeWidth={3} />
                     )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                <div className="flex items-center gap-1">
+                    <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight whitespace-nowrap">
                         {currentGroup?.name || "ปฏิทินของฉัน"}
                     </span>
                     <ChevronDown 
-                        size={14} 
+                        size={12} 
                         strokeWidth={3}
                         className={`text-slate-400 transition-transform duration-300 ${isMenuOpen ? "rotate-180" : ""}`} 
                     />
@@ -69,16 +67,16 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
                                     }}
                                     className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all ${
                                         !currentGroup 
-                                        ? "bg-indigo-600/10 text-indigo-600 border border-indigo-100/50" 
+                                        ? "bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-200 dark:shadow-none" 
                                         : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
                                     }`}
                                 >
-                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 transition-transform">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border border-indigo-100/50 transition-transform ${!currentGroup ? "bg-white/20 text-white" : "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"}`}>
                                         <LayoutGrid size={16} strokeWidth={2.5} />
                                     </div>
                                     <div className="text-left">
-                                        <p className="text-xs font-black tracking-tight text-slate-800 dark:text-slate-100 leading-tight">ปฏิทินของฉัน</p>
-                                        <p className="text-[9px] text-slate-400 font-bold leading-tight">Private Schedule</p>
+                                        <p className={`text-xs font-black tracking-tight leading-tight ${!currentGroup ? "text-white" : "text-slate-800 dark:text-slate-100"}`}>ปฏิทินของฉัน</p>
+                                        <p className={`text-[9px] font-bold leading-tight ${!currentGroup ? "text-white/70" : "text-slate-400"}`}>Private Schedule</p>
                                     </div>
                                 </button>
                             </div>
@@ -102,20 +100,20 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
                                         }}
                                         className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all ${
                                             currentGroup && g.id === currentGroup.id 
-                                            ? "bg-slate-900 text-white shadow-md shadow-slate-200 dark:shadow-none" 
+                                            ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md shadow-slate-200 dark:shadow-none" 
                                             : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
                                         }`}
                                     >
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden ${currentGroup && g.id === currentGroup.id ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800"}`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden ${currentGroup && g.id === currentGroup.id ? "bg-white/20 dark:bg-slate-900/10" : "bg-slate-100 dark:bg-slate-800"}`}>
                                             {g.image || g.icon ? (
                                                 <img src={g.image || g.icon} alt={g.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                <Users size={14} strokeWidth={currentGroup && g.id === currentGroup.id ? 2.5 : 2} />
+                                                <Users size={14} strokeWidth={currentGroup && g.id === currentGroup.id ? 2.5 : 2} className={currentGroup && g.id === currentGroup.id ? "text-white dark:text-slate-900" : "text-slate-400"} />
                                             )}
                                         </div>
                                         <div className="text-left overflow-hidden translate-y-[-1px]">
-                                            <p className={`text-xs font-black truncate tracking-tight ${currentGroup && g.id === currentGroup.id ? "text-white" : "text-slate-800 dark:text-slate-100"}`}>{g.name}</p>
-                                            <p className={`text-[9px] ${currentGroup && g.id === currentGroup.id ? "text-white/60" : "text-slate-400"} font-bold leading-none`}>{g.members?.length || 0} สมาชิก</p>
+                                            <p className={`text-xs font-black truncate tracking-tight ${currentGroup && g.id === currentGroup.id ? "text-white dark:text-slate-950" : "text-slate-800 dark:text-slate-100"}`}>{g.name}</p>
+                                            <p className={`text-[9px] ${currentGroup && g.id === currentGroup.id ? "text-white/60 dark:text-slate-600" : "text-slate-400"} font-bold leading-none`}>{g.members?.length || 0} สมาชิก</p>
                                         </div>
                                     </button>
                                 ))}
@@ -124,6 +122,7 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
                     </div>
                 </div>
             )}
+
             
             {/* Overlay click to close switcher */}
             {isMenuOpen && (

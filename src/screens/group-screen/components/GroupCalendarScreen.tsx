@@ -47,18 +47,18 @@ export default function GroupCalendarScreen({ group }: GroupCalendarScreenProps)
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 relative">
             {/* Super Premium Header */}
-            <div className="mb-6 px-1 flex justify-between items-center transition-all duration-300">
+            <div className="h-10 mb-2 px-1 flex justify-between items-center transition-all duration-300">
                 {/* Left: Month Picker */}
                 <button
                     onClick={() => setIsMonthPickerOpen(true)}
-                    className="h-11 flex items-center gap-2 px-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-white dark:border-slate-700/50 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 group/btn outline-none"
+                    className="h-10 flex items-center gap-1.5 px-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-white dark:border-slate-700/50 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 group/btn outline-none whitespace-nowrap"
                 >
-                    <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</span>
-                    <ChevronDown size={14} strokeWidth={3} className="text-slate-400 group-hover/btn:translate-y-0.5 transition-transform" />
+                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</span>
+                    <ChevronDown size={12} strokeWidth={3} className="text-slate-400 group-hover/btn:translate-y-0.5 transition-transform" />
                 </button>
 
                 {/* Right: Group Identity + Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     <GroupSwitcher 
                         currentGroup={group}
                         allUserGroups={allUserGroups}
@@ -69,7 +69,7 @@ export default function GroupCalendarScreen({ group }: GroupCalendarScreenProps)
                     {/* Share Button */}
                     <button
                         onClick={() => setIsShareOverlayOpen(true)}
-                        className="w-11 h-11 flex items-center justify-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-white dark:border-slate-700/50 shadow-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-90"
+                        className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-full border-2 border-white dark:border-slate-800 shadow-md text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-90"
                         title="แชร์กลุ่ม"
                     >
                         <Share2 size={18} strokeWidth={2.5} />

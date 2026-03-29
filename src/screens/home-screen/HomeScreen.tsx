@@ -164,18 +164,19 @@ const HomeScreen = () => {
     };
 
     return (
-        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300 ${isModalOpen ? "pt-0" : "pt-2"} relative`}>
+        <div className={`px-3 pb-2 max-w-lg mx-auto h-[100dvh] flex flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300 ${isModalOpen ? "pt-0" : "pt-4"} relative`}>
             {/* Header — only show on home tab */}
             {activeTab === "home" && (
-                <div className={`flex justify-between items-center shrink-0 transition-all duration-500 ease-in-out ${isModalOpen ? "h-0 mb-0 pointer-events-none opacity-0 overflow-hidden" : "h-12 mb-2 opacity-100"}`}>
+                <div className={`flex justify-between items-center shrink-0 transition-all duration-500 ease-in-out ${isModalOpen ? "h-0 mb-0 pointer-events-none opacity-0 overflow-hidden" : "h-10 mb-2 opacity-100"}`}>
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
-                        className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm active:scale-95 transition-transform"
+                        className="h-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 rounded-2xl shadow-sm flex items-center gap-1.5 text-slate-800 dark:text-slate-100 font-black text-xs active:scale-95 transition-all outline-none border border-white/50 dark:border-slate-700/50 whitespace-nowrap"
                     >
                         {title}
-                        <ChevronDown size={16} className="text-slate-400" />
+                        <ChevronDown size={12} strokeWidth={3} className="text-slate-400 font-bold" />
                     </button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+
                         {allUserGroups.length > 0 && (
                             <GroupSwitcher 
                                 allUserGroups={allUserGroups}
@@ -194,9 +195,9 @@ const HomeScreen = () => {
                                 setIsSummaryModalOpen(false);
                                 setIsModalOpen(true);
                             }}
-                            className="bg-[#C2185B] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-[#AD1457] shrink-0"
+                            className="bg-[#C2185B] text-white w-10 h-10 rounded-full shadow-md flex items-center justify-center active:scale-95 transition-all hover:bg-[#AD1457] shrink-0 border-2 border-white dark:border-slate-800"
                         >
-                            <Plus size={22} strokeWidth={2.5} />
+                            <Plus size={20} strokeWidth={3} />
                         </button>
                     </div>
                 </div>
