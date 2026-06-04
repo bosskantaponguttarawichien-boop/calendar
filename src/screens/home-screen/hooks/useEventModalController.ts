@@ -60,9 +60,7 @@ export function useEventModalController({
         if (!selectedDate) return;
 
         if (categoryId === "custom") {
-            const url = `/add?date=${selectedDate}`;
-            console.log("[Modal] Navigating to:", url);
-            router.push(url);
+            router.push(`/add?date=${selectedDate}`);
             // Delay closing slightly to ensure push is registered
             setTimeout(() => {
                 onClose();

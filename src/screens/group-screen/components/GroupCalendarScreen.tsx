@@ -14,6 +14,8 @@ import { DayCellContent } from "./calendar/DayCellContent";
 import { MemberFilters } from "./calendar/MemberFilters";
 import { ShareModal } from "./calendar/ShareModal";
 
+const CALENDAR_PLUGINS = [dayGridPlugin, interactionPlugin];
+
 interface GroupCalendarScreenProps {
     group: Group;
 }
@@ -81,7 +83,7 @@ export default function GroupCalendarScreen({ group }: GroupCalendarScreenProps)
             <div className="flex-grow bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-white/20 dark:border-slate-700/30 overflow-hidden mb-4 relative z-0">
                 <FullCalendar
                     ref={calendarRef}
-                    plugins={[dayGridPlugin, interactionPlugin]}
+                    plugins={CALENDAR_PLUGINS}
                     initialView="dayGridMonth"
                     headerToolbar={false}
                     locale="th"

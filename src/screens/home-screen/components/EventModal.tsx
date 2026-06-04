@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, HelpCircle, X } from "lucide-react";
 import { parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
 import { CATEGORIES } from "@/lib/constants";
 import { useEventModalController } from "../hooks/useEventModalController";
+import { ICON_MAP } from "@/components/calendar/CalendarIcon";
 
 interface EventModalProps {
     isOpen: boolean;
@@ -18,19 +19,6 @@ interface EventModalProps {
     setPendingEvents: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
     shifts: any[];
 }
-
-const ICON_MAP: Record<string, any> = {
-    morning: Sun,
-    afternoon: CloudSun,
-    night: Moon,
-    allday: SunMoon,
-    nightafternoon: MoonStar,
-    Sun: Sun,
-    CloudSun: CloudSun,
-    Moon: Moon,
-    SunMoon: SunMoon,
-    MoonStar: MoonStar,
-};
 
 const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, events, pendingEvents, setPendingEvents, shifts }: EventModalProps) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
@@ -46,24 +34,6 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
         handleCancel,
     } = useEventModalController({ selectedDate, userId, events, pendingEvents, setPendingEvents, setSelectedDate, onClose, shifts });
 
-    // Extract unique custom shifts (templates or one-offs)
-    const customShifts = useMemo(() => {
-        const unique = events
-            .filter(e => {
-                // Return true if it's NOT a standard category ID
-                return !["morning", "afternoon", "night", "allday", "nightafternoon", "custom"].includes(e.shiftId as string);
-            })
-            .reduce((acc, curr) => {
-                const key = `${curr.title}-${curr.icon}-${curr.color}`;
-                if (!acc.find(item => `${item.title}-${item.icon}-${item.color}` === key)) {
-                    acc.push(curr);
-                }
-                return acc;
-            }, [] as EventData[]);
-
-        return unique;
-    }, [events]);
-
     const ALL_ITEMS = useMemo(() => {
         const plusCat = CATEGORIES.find(c => c.id === "custom");
 
@@ -77,12 +47,6 @@ const EventModal = ({ isOpen, onClose, selectedDate, userId, setSelectedDate, ev
             ...(plusCat ? [{ id: plusCat.id, label: plusCat.label, icon: plusCat.icon, color: plusCat.color }] : [])
         ];
     }, [shifts]);
-
-    useEffect(() => {
-        console.log("Current UserID in Modal:", userId);
-        console.log("Total Events received:", events.length);
-        console.log("Custom Shifts detected:", customShifts.length);
-    }, [userId, events, customShifts]);
 
     const showArrows = ALL_ITEMS.length > 5;
 

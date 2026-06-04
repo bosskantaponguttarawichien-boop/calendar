@@ -14,44 +14,42 @@ import {
 import { format, parseISO } from "date-fns";
 import { EventData } from "@/types/event.types";
 
+const mapEventDoc = (doc: any): EventData => {
+    const data = doc.data();
+    const id = doc.id;
+    return {
+        id,
+        ...data,
+        collectionName: "events",
+        shiftId: data.shiftId || data.category || id,
+        start: data.start instanceof Timestamp ? data.start.toDate() : data.start,
+        end: data.end instanceof Timestamp ? data.end.toDate() : data.end,
+        startTime: data.startTime || null,
+        endTime: data.endTime || null,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+    };
+};
+
 export function useEventService() {
 
     const subscribeToEvents = useCallback((
-        userId: string, 
+        userId: string,
         onUpdate: (events: EventData[]) => void,
         startDate?: Date,
         endDate?: Date
     ) => {
         let qEvents = query(collection(db, "events"), where("userId", "==", userId));
-        
+
         if (startDate) {
             qEvents = query(qEvents, where("start", ">=", Timestamp.fromDate(startDate)));
         }
         if (endDate) {
             qEvents = query(qEvents, where("start", "<=", Timestamp.fromDate(endDate)));
         }
-        
-        const mapDoc = (doc: any) => {
-            const data = doc.data();
-            const id = doc.id;
-            return {
-                id,
-                ...data,
-                collectionName: "events",
-                shiftId: data.shiftId || data.category || id,
-                start: data.start instanceof Timestamp ? data.start.toDate() : data.start,
-                end: data.end instanceof Timestamp ? data.end.toDate() : data.end,
-                startTime: data.startTime || null,
-                endTime: data.endTime || null,
-                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
-                updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
-            };
-        };
 
         const unsubEvents = onSnapshot(qEvents, (snapshot) => {
-            console.log(`[Service] Received ${snapshot.size} events for user: ${userId}`);
-            const eventsData = snapshot.docs.map(doc => mapDoc(doc)) as EventData[];
-            onUpdate(eventsData);
+            onUpdate(snapshot.docs.map(mapEventDoc));
         });
 
         return unsubEvents;
@@ -120,34 +118,16 @@ export function useEventService() {
         // Firestore 'in' operator supports up to 30 values.
         const chunk = userIds.slice(0, 30);
         let qEvents = query(collection(db, "events"), where("userId", "in", chunk));
-        
+
         if (startDate) {
             qEvents = query(qEvents, where("start", ">=", Timestamp.fromDate(startDate)));
         }
         if (endDate) {
             qEvents = query(qEvents, where("start", "<=", Timestamp.fromDate(endDate)));
         }
-        
-        const mapDoc = (doc: any) => {
-            const data = doc.data();
-            const id = doc.id;
-            return {
-                id,
-                ...data,
-                collectionName: "events",
-                shiftId: data.shiftId || id,
-                start: data.start instanceof Timestamp ? data.start.toDate() : data.start,
-                end: data.end instanceof Timestamp ? data.end.toDate() : data.end,
-                startTime: data.startTime || null,
-                endTime: data.endTime || null,
-                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
-                updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
-            };
-        };
 
         const unsubEvents = onSnapshot(qEvents, (snapshot) => {
-            const eventsData = snapshot.docs.map(doc => mapDoc(doc)) as EventData[];
-            onUpdate(eventsData);
+            onUpdate(snapshot.docs.map(mapEventDoc));
         });
 
         return unsubEvents;

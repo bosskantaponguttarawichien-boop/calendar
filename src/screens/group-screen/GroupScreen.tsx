@@ -140,9 +140,7 @@ const SwipeableGroupItem = ({
 
 import { useRouter } from "next/navigation";
 
-interface GroupScreenProps {}
-
-export default function GroupScreen({}: GroupScreenProps) {
+export default function GroupScreen() {
   const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);

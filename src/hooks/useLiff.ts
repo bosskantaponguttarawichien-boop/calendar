@@ -5,6 +5,9 @@ import liff, { LIFF_ID } from "@/lib/liff";
 import { useUserSettingsService } from "./useUserSettingsService";
 import { useGroupService } from "./useGroupService";
 
+const isLocal = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
 export function useLiff() {
     const [userId, setUserId] = useState<string | null>(null);
     const [displayName, setDisplayName] = useState<string | null>(null);
@@ -36,9 +39,6 @@ export function useLiff() {
 
     useEffect(() => {
         const init = async () => {
-            const isLocal = typeof window !== "undefined" &&
-                (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
             if (isLocal) {
                 console.warn("[LIFF] Mock Mode: Localhost detected. Using mock user.");
                 const mockUserId = "mock-user-123";
@@ -94,12 +94,8 @@ export function useLiff() {
         displayName,
         pictureUrl,
         loading,
-        isMock: typeof window !== "undefined" &&
-            (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"),
+        isMock: isLocal,
         getFriendshipFlag: async (): Promise<boolean> => {
-            const isLocal = typeof window !== "undefined" &&
-                (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
             if (isLocal) {
                 // In local mock mode, we can simulate different states if needed.
                 // For now, let's return true by default so developers aren't blocked, 

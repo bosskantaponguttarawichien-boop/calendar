@@ -30,7 +30,7 @@ const settingItems: { group: string; items: SettingItem[] }[] = [
 export default function SettingScreen({ user }: { user?: any }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const router = useRouter();
-  const { userId, getFriendshipFlag } = useLiff();
+  const { userId } = useLiff();
   const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [isFriendshipModalOpen, setIsFriendshipModalOpen] = useState(false);

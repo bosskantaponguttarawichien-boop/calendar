@@ -1,29 +1,17 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { TrendingUp, Calendar, CheckCircle2, Clock, ChevronRight, HelpCircle, Sun, CloudSun, Moon, SunMoon, MoonStar, ShieldAlert, Zap } from "lucide-react";
-import { format, isPast, isSameMonth, startOfDay, addDays, isSameDay, getWeek, differenceInHours } from "date-fns";
+import { TrendingUp, Calendar, CheckCircle2, Clock, ChevronRight, HelpCircle, Moon, ShieldAlert, Zap } from "lucide-react";
+import { format, isPast, isSameMonth, startOfDay, addDays, isSameDay, getWeek } from "date-fns";
 import { th } from "date-fns/locale";
 import { EventData, Shift } from "@/types/event.types";
+import { ICON_MAP } from "@/components/calendar/CalendarIcon";
 
 interface ResultScreenProps {
   events: EventData[];
   shifts: Shift[];
   pickerDate: Date;
 }
-
-const ICON_MAP: Record<string, any> = {
-  morning: Sun,
-  afternoon: CloudSun,
-  night: Moon,
-  allday: SunMoon,
-  nightafternoon: MoonStar,
-  Sun: Sun,
-  CloudSun: CloudSun,
-  Moon: Moon,
-  SunMoon: SunMoon,
-  MoonStar: MoonStar,
-};
 
 export default function ResultScreen({ events, shifts, pickerDate }: ResultScreenProps) {
   // 1. Filter events for the current selected month

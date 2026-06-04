@@ -3,19 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { parseISO, format } from "date-fns";
 
-import {
-    Sun, CloudSun, Moon, SunMoon, MoonStar, HelpCircle, X
-} from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { Shift, EventData } from "@/types/event.types";
-
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-    morning: Sun,
-    afternoon: CloudSun,
-    night: Moon,
-    allday: SunMoon,
-    nightafternoon: MoonStar,
-};
+import { ICON_MAP } from "@/components/calendar/CalendarIcon";
 
 interface EventSummaryModalProps {
     isOpen: boolean;

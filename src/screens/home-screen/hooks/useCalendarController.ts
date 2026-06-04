@@ -53,15 +53,6 @@ export function useCalendarController(userId: string | null) {
         }
     }, [pendingEvents]);
 
-    // Firestore real-time listener
-    useEffect(() => {
-        if (!userId) return;
-        const unsubscribe = subscribeToEvents(userId, (eventData) => {
-            setEvents(eventData);
-        }, startDate, endDate);
-        return () => unsubscribe();
-    }, [userId, subscribeToEvents, startDate, endDate]);
-
     const updateTitle = useCallback(() => {
         if (calendarRef.current) {
             const api = calendarRef.current.getApi();

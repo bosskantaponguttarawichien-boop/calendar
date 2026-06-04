@@ -17,8 +17,6 @@ export function useDutyListController() {
         updateShiftsOrder 
     } = useShiftController(userId || undefined);
 
-    const settingsLoading = false; // We can integrate this if needed, but shiftsLoading already covers it in the controller
-
     const ALL_ITEMS = useMemo(() => {
         return shifts.map(s => ({
             id: s.id,
@@ -73,9 +71,7 @@ export function useDutyListController() {
     };
 
     return {
-        events: [], // for compatibility if needed elsewhere
-        liffLoading: liffLoading || shiftsLoading || settingsLoading,
-        customShifts: shifts.filter(s => s.userId !== "system"),
+        liffLoading: liffLoading || shiftsLoading,
         ALL_ITEMS,
         handleDelete,
         handleEditClick,

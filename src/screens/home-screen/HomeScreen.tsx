@@ -2,7 +2,7 @@
 
 import React from "react";
 import FullCalendar from "@fullcalendar/react";
-import { ChevronDown, Plus, LayoutGrid } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { format } from "date-fns";
 
 import SettingScreen from "@/screens/setting-screen/SettingScreen";
@@ -16,7 +16,6 @@ import { useLiff } from "@/hooks/useLiff";
 import { useGroupService } from "@/hooks/useGroupService";
 import EventSummaryModal from "./components/EventSummaryModal";
 import { Group } from "@/types/group.types";
-import { useRouter } from "next/navigation";
 import { DayCellContent } from "./components/calendar/DayCellContent";
 import { THAI_DAY_NAMES } from "@/components/calendar/CalendarIcon";
 import { GroupSwitcher } from "@/components/calendar/GroupSwitcher";
@@ -46,7 +45,6 @@ const DayHeader = React.memo(({ date, pickerDate }: { date: Date; pickerDate: Da
 DayHeader.displayName = "DayHeader";
 
 const HomeScreen = () => {
-    const router = useRouter();
     const { userId, displayName, pictureUrl, loading: liffLoading } = useLiff();
     const { subscribeToUserGroups } = useGroupService();
     const {
