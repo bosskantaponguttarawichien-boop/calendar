@@ -3,7 +3,7 @@ import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import { messagingApi } from "@line/bot-sdk";
 import { format } from "date-fns";
-import { buildShiftCarouselMessage } from "./flexMessageBuilder";
+import { buildShiftCarouselMessage, buildGroupShiftCarouselMessage } from "./flexMessageBuilder";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -50,14 +50,9 @@ export const sendDailyShiftNotifications = onSchedule(
       const todayDateText = thaiDateFormatter.format(localNow);
       const tomorrowDateText = thaiDateFormatter.format(localTomorrow);
 
-      for (const userDoc of settingsSnapshot.docs) {
-        const userId = userDoc.id;
-        const userData = userDoc.data();
-        const targetId = userData.targetId || userId;
-
+      const getShiftsForUser = async (uId: string) => {
         // Fetch events for this user (only need current month)
-        // For robustness, we could fetch a wider range, but current month should suffice for today/tomorrow
-        const eventsSnapshot = await db.collection("events").where("userId", "==", userId).get();
+        const eventsSnapshot = await db.collection("events").where("userId", "==", uId).get();
         const events = eventsSnapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -77,13 +72,8 @@ export const sendDailyShiftNotifications = onSchedule(
             return eventDateStr === tomorrowStr;
         });
 
-        if (!todayEvent && !tomorrowEvent) {
-          logger.debug(`Skipping user ${userId}: No events for today or tomorrow.`);
-          continue; 
-        }
-
         // Fetch user specific shifts
-        const userShiftsSnapshot = await db.collection("shifts").where("userId", "==", userId).get();
+        const userShiftsSnapshot = await db.collection("shifts").where("userId", "==", uId).get();
         const userShifts = userShiftsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Merge shifts logic (System + Overrides + Unique)
@@ -114,8 +104,82 @@ export const sendDailyShiftNotifications = onSchedule(
         const todayShift = todayEvent ? allMergedShifts.find(s => s.id === todayEvent.shiftId) : null;
         const tomorrowShift = tomorrowEvent ? allMergedShifts.find(s => s.id === tomorrowEvent.shiftId) : null;
 
-        // Build the physical flex message using the builder
-        const flexMessage = buildShiftCarouselMessage(todayShift, tomorrowShift, todayDateText, tomorrowDateText);
+        return { todayShift, tomorrowShift, hasEvents: !!(todayEvent || tomorrowEvent) };
+      };
+
+      for (const userDoc of settingsSnapshot.docs) {
+        const userId = userDoc.id;
+        const userData = userDoc.data();
+        const targetId = userData.targetId || userId;
+        const notifyDataType = userData.notifyDataType || "user";
+
+        let flexMessage: any;
+
+        if (notifyDataType === "group") {
+          // Find the group to notify (either target by notifyGroupId or fallback to first group containing user)
+          let groupDoc: any = null;
+          if (userData.notifyGroupId) {
+            const groupRef = await db.collection("groups").doc(userData.notifyGroupId).get();
+            if (groupRef.exists) {
+              groupDoc = groupRef;
+            }
+          }
+
+          if (!groupDoc) {
+            const groupsSnapshot = await db.collection("groups").where("memberIds", "array-contains", userId).get();
+            if (!groupsSnapshot.empty) {
+              groupDoc = groupsSnapshot.docs[0];
+            }
+          }
+
+          if (!groupDoc) {
+            logger.warn(`User ${userId} requested group notification, but belongs to no groups. Falling back to individual.`);
+            const { todayShift, tomorrowShift, hasEvents } = await getShiftsForUser(userId);
+            if (!hasEvents) {
+              logger.debug(`Skipping user ${userId}: No events for today or tomorrow.`);
+              continue; 
+            }
+            flexMessage = buildShiftCarouselMessage(todayShift, tomorrowShift, todayDateText, tomorrowDateText);
+          } else {
+            const groupData = groupDoc.data();
+            const members = groupData.members || []; // Array of { id, displayName, pictureUrl }
+            
+            const todayGroupShifts: any[] = [];
+            const tomorrowGroupShifts: any[] = [];
+
+            for (const member of members) {
+              const memberId = member.id;
+              const { todayShift, tomorrowShift } = await getShiftsForUser(memberId);
+              
+              todayGroupShifts.push({
+                memberName: member.displayName,
+                shift: todayShift,
+                isOffDay: !todayShift
+              });
+
+              tomorrowGroupShifts.push({
+                memberName: member.displayName,
+                shift: tomorrowShift,
+                isOffDay: !tomorrowShift
+              });
+            }
+
+            flexMessage = buildGroupShiftCarouselMessage(
+              todayGroupShifts,
+              tomorrowGroupShifts,
+              todayDateText,
+              tomorrowDateText
+            );
+          }
+        } else {
+          // Individual User Notification
+          const { todayShift, tomorrowShift, hasEvents } = await getShiftsForUser(userId);
+          if (!hasEvents) {
+            logger.debug(`Skipping user ${userId}: No events for today or tomorrow.`);
+            continue; 
+          }
+          flexMessage = buildShiftCarouselMessage(todayShift, tomorrowShift, todayDateText, tomorrowDateText);
+        }
 
         try {
           await lineClient.pushMessage({

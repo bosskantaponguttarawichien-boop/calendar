@@ -87,9 +87,9 @@ const SwipeableGroupItem = ({
   
         {/* Main Content Card */}
         <div
-          className={`relative bg-white dark:bg-slate-900 transition-transform duration-300 ease-out flex items-center justify-between px-5 py-5 active:bg-slate-50 dark:active:bg-slate-800/50 cursor-pointer ${
+          className={`relative bg-white dark:bg-slate-900 flex items-center justify-between px-5 py-5 active:bg-slate-50 dark:active:bg-slate-800/50 cursor-pointer ${
             !isLast ? "border-b border-slate-100/50 dark:border-slate-800/50" : ""
-          }`}
+          } ${isSwiping ? "transition-none" : "transition-transform duration-300 ease-out"}`}
           style={{ transform: `translateX(${offsetX}px)` }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}

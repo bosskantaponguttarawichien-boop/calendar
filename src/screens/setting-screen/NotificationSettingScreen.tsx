@@ -5,6 +5,8 @@ import { Bell, User, Users, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "@/hooks/useLiff";
 import { useUserSettingsService, UserSettings } from "@/hooks/useUserSettingsService";
+import { useGroupService } from "@/hooks/useGroupService";
+import { Group } from "@/types/group.types";
 import FriendshipModal from "./components/FriendshipModal";
 
 export default function NotificationSettingScreen() {
@@ -14,6 +16,8 @@ export default function NotificationSettingScreen() {
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isFriendshipModalOpen, setIsFriendshipModalOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [groups, setGroups] = useState<Group[]>([]);
+    const { subscribeToUserGroups } = useGroupService();
 
     useEffect(() => {
         if (!userId) return;
@@ -22,6 +26,14 @@ export default function NotificationSettingScreen() {
         });
         return unsub;
     }, [userId, subscribeToUserSettings]);
+
+    useEffect(() => {
+        if (!userId) return;
+        const unsub = subscribeToUserGroups(userId, (fetchedGroups) => {
+            setGroups(fetchedGroups);
+        });
+        return unsub;
+    }, [userId, subscribeToUserGroups]);
 
     const toggleAutoNotify = async () => {
         if (!userId || !settings || isUpdating) return;
@@ -134,31 +146,102 @@ export default function NotificationSettingScreen() {
 
                             {/* Option 2: Group */}
                             <button
-                                onClick={() => setNotifyDataType("group")}
-                                className={`relative flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 ${
+                                onClick={async () => {
+                                    await setNotifyDataType("group");
+                                    // If only one group, auto-select it
+                                    if (groups.length === 1 && settings?.notifyGroupId !== groups[0].id) {
+                                        try {
+                                            await updateUserSettings(userId || "", { notifyGroupId: groups[0].id });
+                                        } catch (err) {
+                                            console.error("Failed to auto-set notifyGroupId", err);
+                                        }
+                                    }
+                                }}
+                                className={`relative flex flex-col gap-3 p-4 rounded-2xl border-2 transition-all duration-300 text-left w-full ${
                                     settings?.notifyDataType === "group"
                                         ? "bg-white dark:bg-slate-800 border-indigo-500 shadow-md"
                                         : "bg-white/50 dark:bg-slate-800/50 border-transparent grayscale-[0.5] opacity-70"
                                 }`}
                             >
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                                    settings?.notifyDataType === "group"
-                                        ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500"
-                                        : "bg-slate-100 dark:bg-slate-700 text-slate-400"
-                                }`}>
-                                    <Users size={20} />
-                                </div>
-                                <div className="flex-1 text-left">
-                                    <p className={`font-bold text-xs ${
+                                <div className="flex items-center gap-3 w-full">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                                         settings?.notifyDataType === "group"
-                                            ? "text-slate-800 dark:text-white"
-                                            : "text-slate-500 dark:text-slate-400"
-                                    }`}>เวรรวมของกลุ่ม</p>
-                                    <p className="text-[9px] text-slate-400 dark:text-slate-500">ส่งข้อมูลเวรของทุกคนในวันที่เลือก</p>
+                                            ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500"
+                                            : "bg-slate-100 dark:bg-slate-700 text-slate-400"
+                                    }`}>
+                                        <Users size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className={`font-bold text-xs ${
+                                            settings?.notifyDataType === "group"
+                                                ? "text-slate-800 dark:text-white"
+                                                : "text-slate-500 dark:text-slate-400"
+                                        }`}>เวรรวมของกลุ่ม</p>
+                                        <p className="text-[9px] text-slate-400 dark:text-slate-500">ส่งข้อมูลเวรของทุกคนในวันที่เลือก</p>
+                                    </div>
+                                    {settings?.notifyDataType === "group" && (
+                                        <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-white scale-110 shadow-sm animate-in zoom-in duration-300">
+                                            <Check size={12} strokeWidth={3} />
+                                        </div>
+                                    )}
                                 </div>
-                                {settings?.notifyDataType === "group" && (
-                                    <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-white scale-110 shadow-sm animate-in zoom-in duration-300">
-                                        <Check size={12} strokeWidth={3} />
+
+                                {/* Group Selection List */}
+                                {settings?.notifyDataType === "group" && groups.length > 0 && (
+                                    <div className="w-full mt-2 pt-3 border-t border-slate-100 dark:border-slate-700/50 space-y-2">
+                                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                            เลือกกลุ่มที่จะส่งการแจ้งเตือน
+                                        </p>
+                                        <div className="space-y-1.5 w-full">
+                                            {groups.map((group) => {
+                                                const isSelected = settings?.notifyGroupId === group.id;
+                                                return (
+                                                    <div
+                                                        key={group.id}
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation(); // Avoid triggering the parent button click
+                                                            if (!userId || isUpdating) return;
+                                                            try {
+                                                                setIsUpdating(true);
+                                                                await updateUserSettings(userId, { notifyGroupId: group.id });
+                                                            } catch (err) {
+                                                                console.error("Failed to select notify group ID", err);
+                                                            } finally {
+                                                                setIsUpdating(false);
+                                                            }
+                                                        }}
+                                                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                                            isSelected
+                                                                ? "bg-indigo-50/50 dark:bg-indigo-500/5 border-indigo-200 dark:border-indigo-500/20"
+                                                                : "bg-slate-50/50 dark:bg-slate-900/30 border-slate-100 dark:border-slate-800 hover:bg-slate-100/50"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-[10px] text-indigo-500 font-bold">
+                                                                {group.name.charAt(0)}
+                                                            </div>
+                                                            <span className={`text-[11px] font-bold ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-300"}`}>
+                                                                {group.name}
+                                                            </span>
+                                                        </div>
+                                                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                                                            isSelected ? "border-indigo-500 bg-indigo-500 text-white" : "border-slate-300 dark:border-slate-600"
+                                                        }`}>
+                                                            {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* No Groups Alert */}
+                                {settings?.notifyDataType === "group" && groups.length === 0 && (
+                                    <div className="w-full mt-2 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+                                        <p className="text-[9px] font-bold text-amber-500 dark:text-amber-400">
+                                            ⚠️ คุณยังไม่มีกลุ่ม กรุณาสร้างกลุ่มก่อนเพื่อใช้งานการแจ้งเตือนแบบกลุ่ม
+                                        </p>
                                     </div>
                                 )}
                             </button>

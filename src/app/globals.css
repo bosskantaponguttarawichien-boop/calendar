@@ -24,66 +24,70 @@
 
 @keyframes slideOutLeft {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 
   to {
-    transform: translateX(-20%);
+    transform: translate3d(-20%, 0, 0);
     opacity: 0;
   }
 }
 
 @keyframes slideInRight {
   from {
-    transform: translateX(20%);
+    transform: translate3d(20%, 0, 0);
     opacity: 0;
   }
 
   to {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 }
 
 @keyframes slideOutRight {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 
   to {
-    transform: translateX(20%);
+    transform: translate3d(20%, 0, 0);
     opacity: 0;
   }
 }
 
 @keyframes slideInLeft {
   from {
-    transform: translateX(-20%);
+    transform: translate3d(-20%, 0, 0);
     opacity: 0;
   }
 
   to {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 }
 
 .animate-slide-out-left {
-  animation: slideOutLeft 0.15s forwards ease-in;
+  animation: slideOutLeft 0.15s forwards cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .animate-slide-in-right {
-  animation: slideInRight 0.15s forwards ease-out;
+  animation: slideInRight 0.15s forwards cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .animate-slide-out-right {
-  animation: slideOutRight 0.15s forwards ease-in;
+  animation: slideOutRight 0.15s forwards cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .animate-slide-in-left {
-  animation: slideInLeft 0.15s forwards ease-out;
+  animation: slideInLeft 0.15s forwards cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 body {

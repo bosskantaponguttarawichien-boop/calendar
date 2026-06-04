@@ -16,6 +16,7 @@ export interface UserSettings {
     targetId?: string;
     targetType?: "utou" | "group" | "room" | "none";
     notifyDataType?: "user" | "group";
+    notifyGroupId?: string;
 }
 
 export function useUserSettingsService() {
