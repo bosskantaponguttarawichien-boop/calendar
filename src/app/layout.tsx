@@ -3,6 +3,7 @@ import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { MainShiftProvider } from "@/context/MainShiftContext";
+import { LiffProvider } from "@/context/LiffContext";
 
 const notoThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],
@@ -33,9 +34,11 @@ export default function RootLayout({
     <html lang="th" className={notoThai.variable} suppressHydrationWarning>
       <body className="antialiased bg-[#f8fafc] dark:bg-[#0f172a] text-[#1A1A1A] dark:text-white transition-colors duration-300">
         <ThemeProvider>
-          <MainShiftProvider>
-            {children}
-          </MainShiftProvider>
+          <LiffProvider>
+            <MainShiftProvider>
+              {children}
+            </MainShiftProvider>
+          </LiffProvider>
         </ThemeProvider>
       </body>
     </html>

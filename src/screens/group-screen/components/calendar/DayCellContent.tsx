@@ -1,26 +1,26 @@
 import React from "react";
-import { format } from "date-fns";
 import { EventData } from "@/types/event.types";
 import { CalendarIcon } from "@/components/calendar/CalendarIcon";
 
 interface DayCellContentProps {
     arg: any;
-    groupEvents: EventData[];
+    groupedEvents: Record<string, EventData[]>;
     members: any[];
     isSingleView: boolean;
 }
 
-export const DayCellContent: React.FC<DayCellContentProps> = ({ 
+export const DayCellContent: React.FC<DayCellContentProps> = React.memo(({ 
     arg, 
-    groupEvents, 
+    groupedEvents, 
     members, 
     isSingleView 
 }) => {
-    const dateStr = format(arg.date, "yyyy-MM-dd");
-    const dayEvents = groupEvents.filter(e => {
-        const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
-        return format(start, "yyyy-MM-dd") === dateStr;
-    });
+    const y = arg.date.getFullYear();
+    const m = String(arg.date.getMonth() + 1).padStart(2, '0');
+    const d = String(arg.date.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+    
+    const dayEvents = groupedEvents[dateStr] || [];
 
     if (isSingleView) {
         const event = dayEvents[0];
@@ -87,6 +87,8 @@ export const DayCellContent: React.FC<DayCellContentProps> = ({
             </div>
         </div>
     );
-};
+});
+
+DayCellContent.displayName = "DayCellContent";
 
 export default DayCellContent;

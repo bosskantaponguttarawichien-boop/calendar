@@ -40,13 +40,7 @@ export const DayCellContent: React.FC<DayCellContentProps> = React.memo(({
         return ICON_MAP[displayCategory.icon] || HelpCircle;
     }, [displayCategory]);
 
-    const isPast = useMemo(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const cellDate = new Date(arg.date);
-        cellDate.setHours(0, 0, 0, 0);
-        return cellDate < today;
-    }, [arg.date]);
+    const isPast = arg.date.getTime() < new Date().setHours(0, 0, 0, 0);
 
     return (
         <div

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
-import { format, setMonth, setYear } from "date-fns";
+import { setMonth, setYear } from "date-fns";
 import { Group } from "@/types/group.types";
 import { EventData } from "@/types/event.types";
 import { useEventService } from "@/hooks/useEventService";
@@ -79,6 +79,24 @@ export const useGroupCalendar = (group: Group) => {
             };
         });
     }, [events, selectedMemberId, shiftMap]);
+
+    const groupedEvents = useMemo(() => {
+        const groups: Record<string, EventData[]> = {};
+        enrichedEvents.forEach(e => {
+            try {
+                const start = e.start instanceof Date ? e.start : (e.start as any).toDate();
+                const y = start.getFullYear();
+                const m = String(start.getMonth() + 1).padStart(2, '0');
+                const d = String(start.getDate()).padStart(2, '0');
+                const key = `${y}-${m}-${d}`;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(e);
+            } catch {
+                console.warn("[GroupCalendar] Skipped event with invalid date:", e);
+            }
+        });
+        return groups;
+    }, [enrichedEvents]);
 
     // Subscriptions
     useEffect(() => {
@@ -182,6 +200,7 @@ export const useGroupCalendar = (group: Group) => {
     return {
         calendarRef,
         enrichedEvents,
+        groupedEvents,
         isMonthPickerOpen,
         setIsMonthPickerOpen,
         isGroupsMenuOpen,

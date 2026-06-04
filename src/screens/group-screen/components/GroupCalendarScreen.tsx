@@ -23,7 +23,7 @@ interface GroupCalendarScreenProps {
 export default function GroupCalendarScreen({ group }: GroupCalendarScreenProps) {
     const {
         calendarRef,
-        enrichedEvents,
+        groupedEvents,
         isMonthPickerOpen,
         setIsMonthPickerOpen,
         isGroupsMenuOpen,
@@ -97,7 +97,7 @@ export default function GroupCalendarScreen({ group }: GroupCalendarScreenProps)
                     dayCellContent={(arg) => (
                         <DayCellContent 
                             arg={arg} 
-                            groupEvents={enrichedEvents} 
+                            groupedEvents={groupedEvents} 
                             members={group.members} 
                             isSingleView={selectedMemberId !== null} 
                         />

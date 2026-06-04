@@ -98,67 +98,75 @@ const HomeScreen = () => {
     }
 
     const renderPageContent = () => {
-        switch (activeTab) {
-            case "setting":
-                return <SettingScreen user={{ displayName, pictureUrl }} />;
-            case "result":
-                return <ResultScreen events={events} shifts={shifts} pickerDate={pickerDate} />;
-            case "group":
-                return <GroupScreen />;
-            case "home":
-            default:
-                return (
-                    <div className={`flex-grow relative min-h-0 ${animationClass}`}>
-                        <div
-                            ref={calendarWrapperRef}
-                            className={isModalOpen ? "absolute inset-x-0 top-0 overflow-hidden" : "h-full w-full overflow-hidden"}
-                            style={{ bottom: isModalOpen ? MODAL_APPROX_HEIGHT : 0 }}
-                            onWheel={handleWheel}
-                            onTouchStart={handleTouchStart}
-                            onTouchEnd={handleTouchEnd}
-                        >
-                            <FullCalendar
-                                ref={calendarRef}
-                                plugins={CALENDAR_PLUGINS}
-                                initialView="dayGridMonth"
-                                initialDate={pickerDate}
-                                headerToolbar={false}
-                                locale="th"
-                                events={events}
-                                dateClick={handleDateClick}
-                                eventClick={handleEventClick}
-                                height="100%"
-                                expandRows={true}
-                                fixedWeekCount={true}
-                                dayHeaderFormat={{ weekday: "short" }}
-                                dayHeaderContent={(arg) => <DayHeader date={arg.date} pickerDate={pickerDate} />}
-                                datesSet={updateTitle}
-                                dayCellClassNames={(arg) => {
-                                    const dateStr = format(arg.date, "yyyy-MM-dd");
-                                    const dayEvents = groupedEvents[dateStr] || [];
-                                    const pendingCat = pendingEvents[dateStr];
-                                    const isDeleted = pendingCat === "delete";
-                                    const hasEvent = !isDeleted && (dayEvents.length > 0 || (pendingCat && pendingCat !== "delete"));
+        return (
+            <div className="flex-grow relative min-h-0">
+                {/* Home/Calendar Tab */}
+                <div className={`${activeTab === "home" ? "h-full w-full" : "hidden"} ${animationClass}`}>
+                    <div
+                        ref={calendarWrapperRef}
+                        className={isModalOpen ? "absolute inset-x-0 top-0 overflow-hidden" : "h-full w-full overflow-hidden"}
+                        style={{ bottom: isModalOpen ? MODAL_APPROX_HEIGHT : 0 }}
+                        onWheel={handleWheel}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        <FullCalendar
+                            ref={calendarRef}
+                            plugins={CALENDAR_PLUGINS}
+                            initialView="dayGridMonth"
+                            initialDate={pickerDate}
+                            headerToolbar={false}
+                            locale="th"
+                            events={events}
+                            dateClick={handleDateClick}
+                            eventClick={handleEventClick}
+                            height="100%"
+                            expandRows={true}
+                            fixedWeekCount={true}
+                            dayHeaderFormat={{ weekday: "short" }}
+                            dayHeaderContent={(arg) => <DayHeader date={arg.date} pickerDate={pickerDate} />}
+                            datesSet={updateTitle}
+                            dayCellClassNames={(arg) => {
+                                const dateStr = format(arg.date, "yyyy-MM-dd");
+                                const dayEvents = groupedEvents[dateStr] || [];
+                                const pendingCat = pendingEvents[dateStr];
+                                const isDeleted = pendingCat === "delete";
+                                const hasEvent = !isDeleted && (dayEvents.length > 0 || (pendingCat && pendingCat !== "delete"));
 
-                                    return [
-                                        dateStr === selectedDate ? "selected-day" : "",
-                                        hasEvent ? "has-event" : "is-empty"
-                                    ].filter(Boolean).join(" ");
-                                }}
-                                dayCellContent={(arg) => (
-                                    <DayCellContent
-                                        arg={arg}
-                                        groupedEvents={groupedEvents}
-                                        pendingEvents={pendingEvents}
-                                        isModalOpen={isModalOpen}
-                                        shifts={shifts}
-                                    />
-                                )}
-                            />
-                        </div>
+                                return [
+                                    dateStr === selectedDate ? "selected-day" : "",
+                                    hasEvent ? "has-event" : "is-empty"
+                                ].filter(Boolean).join(" ");
+                            }}
+                            dayCellContent={(arg) => (
+                                <DayCellContent
+                                    arg={arg}
+                                    groupedEvents={groupedEvents}
+                                    pendingEvents={pendingEvents}
+                                    isModalOpen={isModalOpen}
+                                    shifts={shifts}
+                                />
+                            )}
+                        />
                     </div>
-                );
-        }
+                </div>
+
+                {/* Result Tab */}
+                <div className={activeTab === "result" ? "h-full w-full flex flex-col" : "hidden"}>
+                    <ResultScreen events={events} shifts={shifts} pickerDate={pickerDate} />
+                </div>
+
+                {/* Group Tab */}
+                <div className={activeTab === "group" ? "h-full w-full flex flex-col" : "hidden"}>
+                    <GroupScreen />
+                </div>
+
+                {/* Setting Tab */}
+                <div className={activeTab === "setting" ? "h-full w-full flex flex-col" : "hidden"}>
+                    <SettingScreen user={{ displayName, pictureUrl }} />
+                </div>
+            </div>
+        );
     };
 
     return (
