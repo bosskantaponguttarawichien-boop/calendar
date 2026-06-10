@@ -5,6 +5,49 @@ import { AlarmClock, Check, Copy, CheckCheck } from "lucide-react";
 import { useLiff } from "@/hooks/useLiff";
 import { useUserSettingsService, UserSettings } from "@/hooks/useUserSettingsService";
 
+const SHORTCUT_STEPS: { step: number; title: string; detail?: string }[] = [
+    {
+        step: 2,
+        title: "เปิดแอป Shortcuts → แถบ Automation (ล่างสุด)",
+        detail: "แตะ + มุมขวาบน → เลือก Time of Day",
+    },
+    {
+        step: 3,
+        title: "ตั้งเวลา เช่น 23:00 ทุกวัน → กด Next",
+        detail: 'เลือก Repeat: Daily แล้วกด "New Blank Automation" (ไม่ใช่ Run Immediately)',
+    },
+    {
+        step: 4,
+        title: 'กด Add Action → ค้นหา "URL" → เลือก URL',
+        detail: "วาง URL ที่ copy ไว้จาก Step 1 ลงในช่อง",
+    },
+    {
+        step: 5,
+        title: 'กด + → ค้นหา "Get Contents of URL" → เลือก',
+        detail: "action นี้จะดึงข้อมูลเวรจากเซิร์ฟเวอร์",
+    },
+    {
+        step: 6,
+        title: 'กด + → ค้นหา "Get Dictionary from Input" → เลือก',
+        detail: "แปลง JSON ที่ได้รับให้เป็น Dictionary",
+    },
+    {
+        step: 7,
+        title: 'กด + → ค้นหา "Repeat with Each" → เลือก',
+        detail: 'แตะที่ช่อง Items → เลือก Dictionary Value → Key: พิมพ์ alarms',
+    },
+    {
+        step: 8,
+        title: 'ในลูป: กด + → ค้นหา "Set Alarm" → เลือก',
+        detail: "แตะเวลา → เลือก Repeat Item → Dictionary Value → Key: alarmTime\nแตะ Label → เลือก Repeat Item → Dictionary Value → Key: label",
+    },
+    {
+        step: 9,
+        title: 'กด Done → แตะ Automation ที่สร้าง → ปิด "Ask Before Running"',
+        detail: "สำคัญมาก! ถ้าไม่ปิดตัวเลือกนี้ Shortcut จะไม่รันอัตโนมัติ",
+    },
+];
+
 const OFFSET_OPTIONS = [
     { value: 15,  label: "15 นาที" },
     { value: 30,  label: "30 นาที" },
@@ -135,17 +178,17 @@ export default function AlarmSettingScreen() {
                     {/* Shortcut Setup */}
                     <div>
                         <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2">
-                            การตั้งค่าครั้งแรก
+                            ขั้นตอนสร้าง Shortcut (ทำครั้งเดียว)
                         </p>
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm px-5 py-4 space-y-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm px-5 py-5 space-y-5">
 
-                            {/* API URL */}
+                            {/* API URL copy box */}
                             <div className="space-y-1.5">
                                 <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                    URL สำหรับ Shortcut
+                                    Step 1 — Copy URL นี้ก่อน
                                 </p>
                                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2.5 border border-slate-100 dark:border-slate-700">
-                                    <p className="flex-1 text-[10px] font-mono text-slate-600 dark:text-slate-300 break-all leading-relaxed">
+                                    <p className="flex-1 text-[10px] font-mono text-slate-600 dark:text-slate-300 break-all leading-relaxed select-all">
                                         {apiUrl ?? "กรุณาเข้าสู่ระบบก่อน"}
                                     </p>
                                     <button
@@ -161,28 +204,26 @@ export default function AlarmSettingScreen() {
                                 </div>
                             </div>
 
-                            {/* Steps */}
-                            <div className="space-y-3">
-                                {[
-                                    "Copy URL ด้านบน",
-                                    "เปิดแอป Shortcuts → Automation → + → Time of Day (เช่น 23:00 ทุกวัน)",
-                                    'เพิ่ม action "Get Contents of URL" แล้ววาง URL',
-                                    'เพิ่ม action "Get Dictionary from Input" แล้ว "Repeat with each" ใน alarms',
-                                    'ในลูป: เพิ่ม "Set Alarm" ตั้ง time = alarmTime, label = label',
-                                    'ปิด "Ask Before Running" เพื่อให้รันอัตโนมัติ',
-                                ].map((text, i) => (
-                                    <div key={i} className="flex items-start gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
-                                            {i + 1}
+                            <div className="h-px bg-slate-100 dark:bg-slate-700" />
+
+                            {/* Detailed steps */}
+                            <div className="space-y-4">
+                                {SHORTCUT_STEPS.map(({ step, title, detail }) => (
+                                    <div key={step} className="flex gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                                            {step}
                                         </div>
-                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                            {text}
-                                        </p>
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 leading-snug">{title}</p>
+                                            {detail && (
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-0.5">{detail}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 text-center pt-1">
                                 ตั้งค่าครั้งเดียว — ระบบตั้งปลุกให้ทุกคืนอัตโนมัติ
                             </p>
                         </div>
