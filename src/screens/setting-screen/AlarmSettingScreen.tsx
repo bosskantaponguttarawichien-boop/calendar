@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlarmClock, Check, ExternalLink } from "lucide-react";
+import { AlarmClock, Check, Copy, CheckCheck } from "lucide-react";
 import { useLiff } from "@/hooks/useLiff";
 import { useUserSettingsService, UserSettings } from "@/hooks/useUserSettingsService";
 
@@ -14,13 +14,23 @@ const OFFSET_OPTIONS = [
     { value: 120, label: "2 ชั่วโมง" },
 ];
 
-const SHORTCUT_ICLOUD_LINK = "https://www.icloud.com/shortcuts/YOUR_SHORTCUT_ID_HERE";
-
 export default function AlarmSettingScreen() {
     const { userId } = useLiff();
     const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const apiUrl = typeof window !== "undefined" && userId
+        ? `${window.location.origin}/api/alarm?userId=${userId}`
+        : null;
+
+    const copyUrl = async () => {
+        if (!apiUrl) return;
+        await navigator.clipboard.writeText(apiUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     useEffect(() => {
         if (!userId) return;
@@ -128,30 +138,49 @@ export default function AlarmSettingScreen() {
                             การตั้งค่าครั้งแรก
                         </p>
                         <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm px-5 py-4 space-y-4">
+
+                            {/* API URL */}
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                    URL สำหรับ Shortcut
+                                </p>
+                                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2.5 border border-slate-100 dark:border-slate-700">
+                                    <p className="flex-1 text-[10px] font-mono text-slate-600 dark:text-slate-300 break-all leading-relaxed">
+                                        {apiUrl ?? "กรุณาเข้าสู่ระบบก่อน"}
+                                    </p>
+                                    <button
+                                        onClick={copyUrl}
+                                        disabled={!apiUrl}
+                                        className="shrink-0 w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-all"
+                                    >
+                                        {copied
+                                            ? <CheckCheck size={14} className="text-emerald-500" />
+                                            : <Copy size={14} />
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Steps */}
                             <div className="space-y-3">
                                 {[
-                                    'กด "ติดตั้ง Shortcut" ด้านล่าง',
-                                    'กด "Add Shortcut" ใน iOS',
-                                    'เปิด Shortcuts → เลือก Automation ที่ได้รับ → ปิด "Ask Before Running"',
+                                    "Copy URL ด้านบน",
+                                    "เปิดแอป Shortcuts → Automation → + → Time of Day (เช่น 23:00 ทุกวัน)",
+                                    'เพิ่ม action "Get Contents of URL" แล้ววาง URL',
+                                    'เพิ่ม action "Get Dictionary from Input" แล้ว "Repeat with each" ใน alarms',
+                                    'ในลูป: เพิ่ม "Set Alarm" ตั้ง time = alarmTime, label = label',
+                                    'ปิด "Ask Before Running" เพื่อให้รันอัตโนมัติ',
                                 ].map((text, i) => (
                                     <div key={i} className="flex items-start gap-3">
                                         <div className="w-5 h-5 rounded-full bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
                                             {i + 1}
                                         </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                                             {text}
                                         </p>
                                     </div>
                                 ))}
                             </div>
-
-                            <button
-                                onClick={() => { window.location.href = SHORTCUT_ICLOUD_LINK; }}
-                                className="w-full flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 py-3 rounded-2xl font-bold text-sm active:scale-[0.98] transition-all"
-                            >
-                                <ExternalLink size={15} />
-                                ติดตั้ง Shortcut
-                            </button>
 
                             <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
                                 ตั้งค่าครั้งเดียว — ระบบตั้งปลุกให้ทุกคืนอัตโนมัติ
