@@ -17,6 +17,8 @@ export interface UserSettings {
     targetType?: "utou" | "group" | "room" | "none";
     notifyDataType?: "user" | "group";
     notifyGroupId?: string;
+    alarmEnabled?: boolean;
+    alarmOffsetMinutes?: number;
 }
 
 export function useUserSettingsService() {

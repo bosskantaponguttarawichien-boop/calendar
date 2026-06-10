@@ -26,7 +26,9 @@ export function useDutyListController() {
             rawIconId: s.icon,
             startTime: s.startTime,
             endTime: s.endTime,
-            isCustom: true, // we want to show edit/delete for all in this screen
+            startTime2: s.startTime2,
+            endTime2: s.endTime2,
+            isCustom: true,
             isMainShift: s.userId === "system",
             realId: (s as any).realId || s.id
         }));
@@ -55,7 +57,9 @@ export function useDutyListController() {
             icon: item.rawIconId || "Sun",
             color: item.color || "#334155",
             startTime: item.startTime || "",
-            endTime: item.endTime || ""
+            endTime: item.endTime || "",
+            startTime2: item.startTime2 || "",
+            endTime2: item.endTime2 || "",
         });
         router.push(`/add?${params.toString()}`);
     };

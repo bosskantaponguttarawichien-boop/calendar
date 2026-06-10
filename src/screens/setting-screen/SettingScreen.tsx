@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Palette, ChevronRight, LogOut, User, ClipboardList, Moon, Bell } from "lucide-react";
+import { Palette, ChevronRight, LogOut, User, ClipboardList, Moon, Bell, AlarmClock } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useRouter } from "next/navigation";
 import { useUserSettingsService, UserSettings } from "@/hooks/useUserSettingsService";
@@ -71,7 +71,7 @@ export default function SettingScreen({ user }: { user?: any }) {
       {/* Setting groups */}
       {settingItems.map((group) => (
         <div key={group.group} className="mb-4">
-          <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 px-3 mb-2">
             {group.group}
           </p>
           <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden">
@@ -81,8 +81,8 @@ export default function SettingScreen({ user }: { user?: any }) {
               
               const content = (
                 <>
-                  <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                    <Icon size={18} className="text-slate-700 dark:text-slate-300" />
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center shrink-0">
+                    <Icon size={20} className="text-slate-600 dark:text-slate-200" />
                   </div>
                   <div className="flex-1 text-left">
                     <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">{item.label}</p>
@@ -90,12 +90,12 @@ export default function SettingScreen({ user }: { user?: any }) {
                   </div>
                   {isDarkModeToggle ? (
                     <div 
-                      className={`w-10 h-6 p-1 rounded-full transition-colors relative flex items-center ${isDarkMode ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'}`}
+                      className={`w-12 h-7 p-1 rounded-full transition-colors relative flex items-center ${isDarkMode ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'}`}
                     >
-                      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                      <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${isDarkMode ? 'translate-x-5' : 'translate-x-0'}`} />
                     </div>
                   ) : (
-                    <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />
+                    <ChevronRight size={18} className="text-slate-300 dark:text-slate-600" />
                   )}
                 </>
               );
@@ -136,22 +136,35 @@ export default function SettingScreen({ user }: { user?: any }) {
 
       {/* Notification Section */}
       <div className="mb-4">
-        <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 px-3 mb-2">
           การแจ้งเตือน
         </p>
         <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden">
           <button
             onClick={() => router.push("/settings/notifications")}
-            className="w-full flex items-center gap-4 px-5 py-4 transition-colors active:bg-slate-50 dark:active:bg-slate-700"
+            className="w-full flex items-center gap-4 px-5 py-4 transition-colors active:bg-slate-50 dark:active:bg-slate-700 border-b border-slate-100 dark:border-slate-700"
           >
-            <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-              <Bell size={18} className="text-slate-700 dark:text-slate-300" />
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center shrink-0">
+              <Bell size={20} className="text-slate-600 dark:text-slate-200" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">การแจ้งเตือนอัตโนมัติ</p>
               <p className="text-slate-400 dark:text-slate-500 text-xs">ตั้งค่าการส่งเวรอัตโนมัติลงแชท</p>
             </div>
-            <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />
+            <ChevronRight size={18} className="text-slate-300 dark:text-slate-600" />
+          </button>
+          <button
+            onClick={() => router.push("/settings/alarm")}
+            className="w-full flex items-center gap-4 px-5 py-4 transition-colors active:bg-slate-50 dark:active:bg-slate-700"
+          >
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center shrink-0">
+              <AlarmClock size={20} className="text-slate-600 dark:text-slate-200" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">นาฬิกาปลุก iPhone</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs">ตั้งปลุกอัตโนมัติตามตารางเวร</p>
+            </div>
+            <ChevronRight size={18} className="text-slate-300 dark:text-slate-600" />
           </button>
         </div>
       </div>
@@ -159,8 +172,8 @@ export default function SettingScreen({ user }: { user?: any }) {
       {/* Logout */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-sm overflow-hidden mb-4">
         <button className="w-full flex items-center gap-4 px-5 py-4 active:bg-red-50 dark:active:bg-red-950/30 transition-colors">
-          <div className="w-9 h-9 rounded-2xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center shrink-0">
-            <LogOut size={18} className="text-red-500" />
+          <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center shrink-0">
+            <LogOut size={20} className="text-red-500" />
           </div>
           <span className="text-red-500 font-medium text-sm">ออกจากระบบ</span>
         </button>

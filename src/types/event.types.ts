@@ -8,6 +8,8 @@ export interface Shift {
     icon: string;
     startTime?: string | null;
     endTime?: string | null;
+    startTime2?: string | null;
+    endTime2?: string | null;
     mainShiftId?: string | null; // Links to a MainShift if this is an override
     realId?: string;            // The underlying document ID if this is an override
     createdAt?: Date;
@@ -21,6 +23,8 @@ export interface MainShift {
     icon: string;
     startTime: string;
     endTime: string;
+    startTime2?: string | null;
+    endTime2?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
 }

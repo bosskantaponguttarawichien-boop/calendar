@@ -2,107 +2,128 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useShiftService } from "./useShiftService";
 import { useMainShifts } from "@/context/MainShiftContext";
 import { useUserSettingsService } from "./useUserSettingsService";
-import { Shift } from "@/types/event.types";
+import { Shift, MainShift } from "@/types/event.types";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+/** Convert a MainShift document into a system-owned Shift */
+function toSystemShift(ms: MainShift): Shift {
+    return {
+        id: ms.id,
+        userId: "system",
+        title: ms.title,
+        color: ms.color,
+        icon: ms.icon,
+        startTime: ms.startTime || null,
+        endTime: ms.endTime || null,
+        startTime2: ms.startTime2 || null,
+        endTime2: ms.endTime2 || null,
+    };
+}
+
+/**
+ * Build a map of mainShiftId → user override shift.
+ * A user shift is treated as an override when it has an explicit mainShiftId,
+ * or when its title matches a system shift.
+ */
+function buildOverrideMap(
+    userShifts: Shift[],
+    systemShifts: Shift[]
+): Map<string, Shift> {
+    const overrides = new Map<string, Shift>();
+
+    for (const userShift of userShifts) {
+        const mainId =
+            userShift.mainShiftId ||
+            systemShifts.find((s) => s.title === userShift.title)?.id;
+
+        if (mainId) {
+            // Expose the mainShift's id externally; keep realId for writes
+            overrides.set(mainId, { ...userShift, id: mainId, realId: userShift.id });
+        }
+    }
+
+    return overrides;
+}
+
+/** Sort combined shifts according to a saved order array */
+function sortByOrder(shifts: Shift[], order: string[]): Shift[] {
+    if (order.length === 0) return shifts;
+
+    return [...shifts].sort((a, b) => {
+        const ai = order.indexOf(a.id);
+        const bi = order.indexOf(b.id);
+        if (ai !== -1 && bi !== -1) return ai - bi;
+        return ai !== -1 ? -1 : bi !== -1 ? 1 : 0;
+    });
+}
+
+// ─── hook ────────────────────────────────────────────────────────────────────
 
 export function useShiftController(userId: string | undefined) {
     const { subscribeToShifts, addShift, updateShift, deleteShift } = useShiftService();
     const { subscribeToUserSettings, updateUserSettings } = useUserSettingsService();
     const { mainShifts, loading: mainLoading } = useMainShifts();
-    
-    const [userShifts, setUserShifts] = useState<Shift[]>([]);
-    const [userLoading, setUserLoading] = useState(!!userId);
-    const [shiftsOrder, setShiftsOrder] = useState<string[]>([]);
-    const [settingsLoading, setSettingsLoading] = useState(!!userId);
 
-    // Subscribe to Shifts
+    const [userShifts, setUserShifts]     = useState<Shift[]>([]);
+    const [shiftsOrder, setShiftsOrder]   = useState<string[]>([]);
+    const [userLoading, setUserLoading]   = useState(!!userId);
+    const [orderLoading, setOrderLoading] = useState(!!userId);
+
     useEffect(() => {
         if (!userId) return;
-
+        setUserLoading(true);
         const unsub = subscribeToShifts(userId, (shifts) => {
             setUserShifts(shifts);
             setUserLoading(false);
         });
-
-        return () => {
-            unsub();
-            setUserLoading(true);
-        };
+        return () => { unsub(); setUserLoading(true); };
     }, [userId, subscribeToShifts]);
 
-    // Subscribe to User Settings (for shiftsOrder)
     useEffect(() => {
         if (!userId) return;
-
+        setOrderLoading(true);
         const unsub = subscribeToUserSettings(userId, (settings) => {
             setShiftsOrder(settings.shiftsOrder || []);
-            setSettingsLoading(false);
+            setOrderLoading(false);
         });
-
-        return () => {
-            unsub();
-            setSettingsLoading(true);
-        };
+        return () => { unsub(); setOrderLoading(true); };
     }, [userId, subscribeToUserSettings]);
 
-    const allShifts = useMemo(() => {
-        // Create system shifts from main shifts
-        const systemShifts: Shift[] = mainShifts.map(ms => ({
-            id: ms.id,
-            userId: "system",
-            title: ms.title,
-            color: ms.color,
-            icon: ms.icon,
-            startTime: ms.startTime,
-            endTime: ms.endTime,
-        }));
+    const shifts = useMemo(() => {
+        const systemShifts = mainShifts.map(toSystemShift);
+        const overrides     = buildOverrideMap(userShifts, systemShifts);
 
-        // Separate user shifts into overrides and unique shifts
-        const overrides = new Map<string, Shift>();
-        const uniqueUserShifts: Shift[] = [];
+        // User shifts that don't override anything
+        const uniqueUserShifts = userShifts.filter(
+            (us) => !us.mainShiftId && !systemShifts.find((s) => s.title === us.title)
+        );
 
-        userShifts.forEach(us => {
-            const mainId = us.mainShiftId || systemShifts.find(ss => ss.title === us.title)?.id;
-            if (mainId) {
-                overrides.set(mainId, { ...us, id: mainId, realId: us.id });
-            } else {
-                uniqueUserShifts.push(us);
-            }
-        });
-
-        // Merge and sort
-        const combined = [
-            ...systemShifts.map(ss => overrides.get(ss.id) || ss),
-            ...uniqueUserShifts
+        const merged = [
+            ...systemShifts.map((s) => overrides.get(s.id) ?? s),
+            ...uniqueUserShifts,
         ];
 
-        if (shiftsOrder.length === 0) return combined;
-
-        return [...combined].sort((a, b) => {
-            const aIdx = shiftsOrder.indexOf(a.id);
-            const bIdx = shiftsOrder.indexOf(b.id);
-            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-            return aIdx !== -1 ? -1 : (bIdx !== -1 ? 1 : 0);
-        });
+        return sortByOrder(merged, shiftsOrder);
     }, [mainShifts, userShifts, shiftsOrder]);
 
-    const updateShiftsOrder = useCallback(async (newOrder: string[]) => {
-        if (!userId) return;
-        try {
+    const updateShiftsOrder = useCallback(
+        async (newOrder: string[]) => {
+            if (!userId) return;
             await updateUserSettings(userId, { shiftsOrder: newOrder });
-        } catch (error) {
-            console.error("Failed to update shifts order:", error);
-            throw error;
-        }
-    }, [userId, updateUserSettings]);
+        },
+        [userId, updateUserSettings]
+    );
 
     return {
-        shifts: allShifts,
+        shifts,
         userShifts,
-        loading: mainLoading || userLoading || settingsLoading,
-        addShift: (data: Omit<Shift, "id" | "userId">) => userId ? addShift(userId, data) : Promise.reject("No User ID"),
+        loading: mainLoading || userLoading || orderLoading,
+        addShift:  (data: Omit<Shift, "id" | "userId">) =>
+            userId ? addShift(userId, data) : Promise.reject("No userId"),
         updateShift,
         deleteShift,
         updateShiftsOrder,
-        shiftsOrder
+        shiftsOrder,
     };
 }
